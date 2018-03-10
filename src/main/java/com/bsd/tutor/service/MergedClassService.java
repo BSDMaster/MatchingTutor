@@ -470,7 +470,17 @@ public class MergedClassService {
 
     }
 
-
+    public List<MergedClass> convertRecTutorToMergedClass(List<RecommendTutor> recTutors){
+        List<MergedClass> mergedClasses = new ArrayList<>();
+        MergedClass tmpMergedClass = null;
+        for (RecommendTutor recTutor : recTutors) {
+            tmpMergedClass = recTutor.getMergedClass();
+            tmpMergedClass.setRecommendTutors(new ArrayList<>());
+            tmpMergedClass.addRecommendTutor(recTutor);
+            mergedClasses.add(tmpMergedClass);
+        }
+        return mergedClasses;
+    }
 
 }
 

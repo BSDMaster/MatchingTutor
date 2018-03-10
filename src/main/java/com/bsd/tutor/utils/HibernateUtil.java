@@ -44,6 +44,7 @@ public class HibernateUtil {
         configuration.addAnnotatedClass(MergedClass.class);
         configuration.addAnnotatedClass(MergedClassAvailabletimeLocation.class);
         configuration.addAnnotatedClass(TravelTime.class);
+        configuration.addAnnotatedClass(RecommendStatus.class);
         StandardServiceRegistryBuilder builder = new StandardServiceRegistryBuilder()
                 .applySettings(configuration.getProperties());
         sessionFactory = configuration

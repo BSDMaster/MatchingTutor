@@ -93,7 +93,12 @@ public class GoogleAPIMapServices {
 			e.printStackTrace();
 		}
 		Double seconds = Double.valueOf(matrix.rows[0].elements[0].duration.inSeconds);
-		travelTime = new TravelTime(startLat, startLong, endLat, endLong, type, seconds);
+        Double secondsRoundUp = seconds / (Constants.ROUNDUP_TRAVELTIME * 60);
+        if (seconds >= secondsRoundUp) {
+            secondsRoundUp +=  (Constants.ROUNDUP_TRAVELTIME * 60);
+        }
+
+		travelTime = new TravelTime(startLat, startLong, endLat, endLong, type, secondsRoundUp);
         travelTime = travelTimeDao.create(travelTime);
 
 		return travelTime.getTmeTime();

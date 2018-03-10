@@ -535,9 +535,9 @@ public class App {
 		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
 		// Find Recommend Tutors duplicated time slot for mix classes case (Tutor)
 		// Convert map to rec tutors list
-		List<RecommendTutor> recTutorsConvertFromMixTutorMap = recTutorService.convertMapToRecTutors(allByStudentMap);
+		List<RecommendTutor> recTutorsConvertFromMixStuMap = recTutorService.convertMapToRecTutors(allByStudentMap);
 
-		MixClass recTutorsMixClass = splitMergedAndNormalClass(recTutorsConvertFromMixTutorMap);
+		MixClass recTutorsMixClass = splitMergedAndNormalClass(recTutorsConvertFromMixStuMap);
 		List<RecommendTutor> rectutorsNormal = recTutorsMixClass.getRecTutorsNormal();
 		List<RecommendTutor> rectutorsMerged = recTutorsMixClass.getRecTutorsMerged();
 		System.out.println("Normal : "+rectutorsNormal.size());
@@ -561,6 +561,18 @@ public class App {
 			}
 		}
 		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
+		// Create recommend tutors
+		List<RecommendTutor> finalRecTutors = recTutorService.convertMapToRecTutors(allByTutorMap);
+		MixClass finalMixClass = splitMergedAndNormalClass(finalRecTutors);
+		List<RecommendTutor> finalRecTutorsMergedClass = finalMixClass.getRecTutorsMerged();
+		List<RecommendTutor> finalRecTutorsClass = finalMixClass.getRecTutorsNormal();
+		List<MergedClass> finalMeredClasses = mergedClassService.convertRecTutorToMergedClass(finalRecTutorsMergedClass);
+		RecommendTutorDao recommendTutorDao = new RecommendTutorDao();
+		recommendTutorDao.createList(finalRecTutorsClass);
+		MergedClassDao mergedClassDao = new MergedClassDao();
+		mergedClassDao.createList(finalMeredClasses);
+
+
 		System.exit(0);
 	}
 	public static MixClass splitMergedAndNormalClass(List<RecommendTutor> recTutors){
@@ -580,30 +592,6 @@ public class App {
 
 		return mixClass;
 	}
-/*
-	public static MixClass splitMergedAndNormalClass(Map<Integer, List<RecommendTutor>> map){
-		List<RecommendTutor> recTutors = new ArrayList<>();
-		List<RecommendTutor> recTutorsNormal = new ArrayList<>();
-		List<RecommendTutor> recTutorsMerged = new ArrayList<>();
-
-		for (Map.Entry<Integer,List<RecommendTutor>> entry : map.entrySet())
-		{
-			recTutors.addAll(entry.getValue());
-		}
-
-		for (RecommendTutor rectutor : recTutors) {
-			if (rectutor.getMergedClass() != null) {
-				recTutorsMerged.add(rectutor);
-			} else {
-				recTutorsNormal.add(rectutor);
-			}
-		}
-
-		MixClass mixClass = new MixClass(recTutorsNormal, recTutorsMerged);
-
-		return mixClass;
-	}
-*/
 
 	public static Double calculateRatio(RecommendTutor recTutor){
 		if (recTutor.getClazz()!=null) {
@@ -976,10 +964,6 @@ public class App {
 
 		return selectedMergedClass;
 	}
-
-
-
-
 	public static Map<Integer,List<RecommendTutor>> groupByStudentMerged(List<RecommendTutor> recTutors){
 		Map<Integer,List<RecommendTutor>> recommendByStudents = new HashMap<>();
 

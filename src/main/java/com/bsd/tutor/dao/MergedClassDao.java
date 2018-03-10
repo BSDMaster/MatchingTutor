@@ -44,6 +44,18 @@ public class MergedClassDao {
 
     }
 
+    public static List<MergedClass> createList(List<MergedClass> mergedClasses) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        session.beginTransaction();
+        for (MergedClass mergedClass : mergedClasses) {
+            session.save(mergedClass);
+        }
+        session.getTransaction().commit();
+        session.close();
+        System.out.println("Successfully created " + mergedClasses.size());
+        return mergedClasses;
+
+    }
     public static List<MergedClass> read() {
         Session session = HibernateUtil.getSessionFactory().openSession();
         @SuppressWarnings("unchecked")

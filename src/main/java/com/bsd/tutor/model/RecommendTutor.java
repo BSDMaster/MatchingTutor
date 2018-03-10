@@ -65,6 +65,11 @@ public class RecommendTutor implements Serializable {
 	@JoinColumn(name="REC_TUR_ID")
 	private Tutor tutor;
 
+	//bi-directional many-to-one association to Class
+	@ManyToOne(fetch=FetchType.EAGER)
+	@JoinColumn(name="REC_RECOMMEND_STATUS_ID")
+	private RecommendStatus recommendStatus;
+
 	@Transient
 	private Double minTravelTime;
 
@@ -209,6 +214,14 @@ public class RecommendTutor implements Serializable {
 
 	public MergedClass getMergedClass() {
 		return mergedClass;
+	}
+
+	public RecommendStatus getRecommendStatus() {
+		return recommendStatus;
+	}
+
+	public void setRecommendStatus(RecommendStatus recommendStatus) {
+		this.recommendStatus = recommendStatus;
 	}
 
 	public void setMergedClass(MergedClass mergedClass) {

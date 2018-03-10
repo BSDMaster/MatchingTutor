@@ -21,10 +21,13 @@ public class Constants {
     public static final Double TIME_DIFF = 0.30D;
 
     public static final Integer GOOGLEMAP_API_DELAYTIME = 600;
+    public static final Integer ROUNDUP_TRAVELTIME = 15;
 
     public static final String FLAG_STUDENT = "S";
     public static final String FLAG_TUTOR = "T";
 
     public static final String TRAVELTYPE_TRANSIT = "T";
     public static final String TRAVELTYPE_DRIVE = "D";
+
+
 }
