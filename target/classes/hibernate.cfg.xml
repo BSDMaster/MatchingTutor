@@ -46,5 +46,6 @@
        <mapping class="com.bsd.tutor.model.CourseCalendar"/>
        <mapping class="com.bsd.tutor.model.MergedClass"/>
        <mapping class="com.bsd.tutor.model.MergedClassAvailabletimeLocation"/>
+       <mapping class="com.bsd.tutor.model.TravelTime"/>
 </session-factory>
 </hibernate-configuration>

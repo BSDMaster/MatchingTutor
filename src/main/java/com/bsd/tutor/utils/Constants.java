@@ -24,4 +24,7 @@ public class Constants {
 
     public static final String FLAG_STUDENT = "S";
     public static final String FLAG_TUTOR = "T";
+
+    public static final String TRAVELTYPE_TRANSIT = "T";
+    public static final String TRAVELTYPE_DRIVE = "D";
 }
