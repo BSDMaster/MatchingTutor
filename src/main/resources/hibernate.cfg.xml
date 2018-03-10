@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-configuration SYSTEM 
+"http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+
+<hibernate-configuration>
+   <session-factory>
+
+       <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+   <property name="hibernate.connection.driver_class">com.mysql.cj.jdbc.Driver</property>
+   <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/tutordb?characterEncoding=UTF-8</property>
+   <property name="hibernate.connection.username">root</property>
+   <property name="hibernate.connection.password">1234</property>
+   <!--<property name="hibernate.hbm2ddl.auto">update</property>-->
+   <property name="show_sql">false</property>
+      <property name="hibernate.c3p0.min_size">10</property>
+      <property name="hibernate.c3p0.max_size">60</property>
+      <property name="hibernate.c3p0.timeout">500</property>
+       <property name="hibernate.connection.pool_size">10</property>
+       <property name="hibernate.connection.provider_class">org.hibernate.connection.C3P0ConnectionProvider</property>
+       <property name="hibernate.c3p0.acquire_increment">1</property>
+<!--      <property name="hibernate.c3p0.max_statements">100</property>
+      <property name="hibernate.c3p0.idle_test_period">3000</property>
+       <property name="current_session_context_class">thread</property>-->
+   <!--    <property name="hibernate.enable_lazy_load_no_trans">true</property> -->
+   <mapping class="com.bsd.tutor.model.Employee"/>
+      <mapping class="com.bsd.tutor.model.Employee"/>
+      <mapping class="com.bsd.tutor.model.Class"/>
+      <mapping class="com.bsd.tutor.model.ClassStatus"/>
+       <mapping class="com.bsd.tutor.model.ClassTutorFaculty"/>
+       <mapping class="com.bsd.tutor.model.ClassTutorUniversity"/>
+      <mapping class="com.bsd.tutor.model.Faculty"/>
+       <mapping class="com.bsd.tutor.model.FacultyOfUniversity"/>
+      <mapping class="com.bsd.tutor.model.Parent"/>
+        <mapping class="com.bsd.tutor.model.Student"/>
+       <mapping class="com.bsd.tutor.model.StudentAvailableTimelocation"/>
+        <mapping class="com.bsd.tutor.model.Subject"/>
+       <mapping class="com.bsd.tutor.model.SubjectDetail"/>
+        <mapping class="com.bsd.tutor.model.SubjectGroup"/>
+       <mapping class="com.bsd.tutor.model.SubjectGroupDetail"/>
+        <mapping class="com.bsd.tutor.model.Traveltype"/>
+       <mapping class="com.bsd.tutor.model.Tutor"/>
+        <mapping class="com.bsd.tutor.model.TutorAvailableTimeloacation"/>
+       <mapping class="com.bsd.tutor.model.University"/>
+        <mapping class="com.bsd.tutor.model.TutorProgram"/>
+       <mapping class="com.bsd.tutor.model.TutorSubject"/>
+       <mapping class="com.bsd.tutor.model.CourseCalendar"/>
+       <mapping class="com.bsd.tutor.model.MergedClass"/>
+       <mapping class="com.bsd.tutor.model.MergedClassAvailabletimeLocation"/>
+</session-factory>
+</hibernate-configuration>
