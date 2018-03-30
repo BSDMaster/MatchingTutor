@@ -21,10 +21,10 @@ public class Class implements Serializable {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name="CLS_ID")
-	private Integer clsId;
+	private Long clsId;
 
 	@Column(name="CLS_DAYPERWEEK")
-	private Integer clsDayperweek;
+	private Long clsDayperweek;
 
 	@Column(name="CLS_DURATION")
 	private Double clsDuration;
@@ -33,7 +33,7 @@ public class Class implements Serializable {
 	private String clsIsMerge;
 
 	@Column(name="CLS_NUMOFSTU")
-	private Integer clsNumofstu;
+	private Long clsNumofstu;
 
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name="CLS_PAIDDATE")
@@ -47,10 +47,8 @@ public class Class implements Serializable {
 	private Date clsStartdate;
 
 	@Column(name="CLS_TOTALHOURS")
-	private Integer clsTotalhours;
+	private Long clsTotalhours;
 
-	@Column(name="CLS_TUR_ID")
-	private Integer clsTurId;
 
 	@Column(name="CLS_TUTOR_EXP")
 	private String clsTutorExp;
@@ -59,7 +57,7 @@ public class Class implements Serializable {
 	private String clsTutorSex;
 
 	@Column(name="CLS_PRG_ID")
-	private Integer clsPrgId;
+	private Long clsPrgId;
 
 	//bi-directional many-to-one association to ClassStatus
 	@ManyToOne(fetch=FetchType.EAGER)
@@ -101,22 +99,29 @@ public class Class implements Serializable {
     @Fetch(FetchMode.SELECT)
 	private List<RecommendTutor> recommendTutors;
 
+	@ManyToOne(fetch=FetchType.EAGER)
+	@JoinColumn(name="CLS_TUR_ID")
+	private Tutor tutor;
+
+	@Transient
+	private boolean tmpFLag = false;
+
 	public Class() {
 	}
 
-	public Integer getClsId() {
+	public Long getClsId() {
 		return this.clsId;
 	}
 
-	public void setClsId(Integer clsId) {
+	public void setClsId(Long clsId) {
 		this.clsId = clsId;
 	}
 
-	public Integer getClsDayperweek() {
+	public Long getClsDayperweek() {
 		return this.clsDayperweek;
 	}
 
-	public void setClsDayperweek(Integer clsDayperweek) {
+	public void setClsDayperweek(Long clsDayperweek) {
 		this.clsDayperweek = clsDayperweek;
 	}
 
@@ -136,11 +141,11 @@ public class Class implements Serializable {
 		this.clsIsMerge = clsIsMerge;
 	}
 
-	public Integer getClsNumofstu() {
+	public Long getClsNumofstu() {
 		return this.clsNumofstu;
 	}
 
-	public void setClsNumofstu(Integer clsNumofstu) {
+	public void setClsNumofstu(Long clsNumofstu) {
 		this.clsNumofstu = clsNumofstu;
 	}
 
@@ -168,20 +173,12 @@ public class Class implements Serializable {
 		this.clsStartdate = clsStartdate;
 	}
 
-	public Integer getClsTotalhours() {
+	public Long getClsTotalhours() {
 		return this.clsTotalhours;
 	}
 
-	public void setClsTotalhours(Integer clsTotalhours) {
+	public void setClsTotalhours(Long clsTotalhours) {
 		this.clsTotalhours = clsTotalhours;
-	}
-
-	public Integer getClsTurId() {
-		return this.clsTurId;
-	}
-
-	public void setClsTurId(Integer clsTurId) {
-		this.clsTurId = clsTurId;
 	}
 
 	public String getClsTutorExp() {
@@ -321,11 +318,11 @@ public class Class implements Serializable {
 	}
 
 
-	public Integer getClsPrgId() {
+	public Long getClsPrgId() {
 		return clsPrgId;
 	}
 
-	public void setClsPrgId(Integer clsPrgId) {
+	public void setClsPrgId(Long clsPrgId) {
 		this.clsPrgId = clsPrgId;
 	}
 
@@ -336,6 +333,14 @@ public class Class implements Serializable {
 
 	public void setCourseCalendars(List<CourseCalendar> courseCalendars) {
 		this.courseCalendars = courseCalendars;
+	}
+
+	public Tutor getTutor() {
+		return tutor;
+	}
+
+	public void setTutor(Tutor tutor) {
+		this.tutor = tutor;
 	}
 
 	@Override
@@ -357,5 +362,13 @@ public class Class implements Serializable {
 	@Override
 	public String toString() {
 		return clsId.toString();
+	}
+
+	public boolean isTmpFLag() {
+		return tmpFLag;
+	}
+
+	public void setTmpFLag(boolean tmpFLag) {
+		this.tmpFLag = tmpFLag;
 	}
 }

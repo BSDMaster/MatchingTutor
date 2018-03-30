@@ -17,7 +17,7 @@ public class Faculty implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="FAC_ID")
-	private Integer facId;
+	private Long facId;
 
 	@Column(name="FAC_NAME")
 	private String facName;
@@ -33,11 +33,11 @@ public class Faculty implements Serializable {
 	public Faculty() {
 	}
 
-	public Integer getFacId() {
+	public Long getFacId() {
 		return this.facId;
 	}
 
-	public void setFacId(Integer facId) {
+	public void setFacId(Long facId) {
 		this.facId = facId;
 	}
 

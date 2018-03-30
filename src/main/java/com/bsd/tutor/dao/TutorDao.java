@@ -34,7 +34,7 @@ public class TutorDao {
         return tutors;
     }
 
-    public static List<Tutor> findByClassInfo(Integer subjectId, Integer subjectDetailId) {
+    public static List<Tutor> findByClassInfo(Long subjectId, Long subjectDetailId) {
         Session session = HibernateUtil.getSessionFactory().openSession();
 
        // List<Tutor> tutors = session.createQuery("FROM Tutor WHERE tutorSubject.subjectDetail.subject.subjId = : AND tutorSubject.subjectDetail.subjectGroup.").list();
@@ -53,7 +53,7 @@ public class TutorDao {
     }
 
 
-    public static Integer create(Tutor e) {
+    public static Long create(Tutor e) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         session.beginTransaction();
         session.save(e);
@@ -75,14 +75,14 @@ public class TutorDao {
     }
 
 
-    public static Tutor findByID(Integer id) {
+    public static Tutor findByID(Long id) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         Tutor e = (Tutor) session.load(Tutor.class, id);
         session.close();
         return e;
     }
 
-    public static List<Tutor> findBySubjectAndProgram(Integer subjectId, Integer groupId, Integer programId) {
+    public static List<Tutor> findBySubjectAndProgram(Long subjectId, Long groupId, Long programId) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         @SuppressWarnings("unchecked")
         String hql = "SELECT t FROM Tutor as t INNER JOIN t.tutorSubject as s ON t.turId = s.tutor.turId " +
@@ -102,7 +102,7 @@ public class TutorDao {
        // System.out.println("Found " + tutors.size() + " tutors");
         return tutors;
     }
-    public static List<Tutor> findBySubjectAndProgram(Integer subjectId1, Integer groupId1, Integer subjectId2, Integer groupId2, Integer programId) {
+    public static List<Tutor> findBySubjectAndProgram(Long subjectId1, Long groupId1, Long subjectId2, Long groupId2, Long programId) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         @SuppressWarnings("unchecked")
         String hql = "SELECT t FROM Tutor as t INNER JOIN t.tutorSubject as s ON t.turId = s.tutor.turId " +

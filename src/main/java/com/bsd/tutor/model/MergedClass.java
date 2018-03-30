@@ -22,13 +22,13 @@ public class MergedClass implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="MER_ID")
-	private int merId;
+	private Long merId;
 
 	@Column(name="MER_MERGERATIO")
 	private double merMergeratio;
 
 	@Column(name="MER_MINDAYPERWEEK")
-	private int merMindayperweek;
+	private Long merMindayperweek;
 
 	@Column(name="MER_SAMEPARENT_FLAG")
 	private String merSameparentFlag;
@@ -50,8 +50,10 @@ public class MergedClass implements Serializable {
 	private String merTurSex;
 
 	@Column(name="MER_TUR_PRG_ID")
-	private Integer merTurPrgId;
+	private Long merTurPrgId;
 
+	@Column(name="MER_TYPE")
+	private String merType;
 
 	//bi-directional many-to-one association to Class
 	@ManyToOne(fetch=FetchType.EAGER)
@@ -87,10 +89,16 @@ public class MergedClass implements Serializable {
 	private Integer numberOfAvaDays;
 
 	@Transient
-	private Set<Integer> avaDays;
+	private Set<Long> avaDays;
 
 	@Transient
-	private Integer macDays;
+	private Integer maxDays;
+
+	@Transient
+	private Integer remainDays1;
+
+	@Transient
+	private Integer remainDays2;
 
 	public MergedClass() {
 	}
@@ -99,11 +107,11 @@ public class MergedClass implements Serializable {
 		this.clazz2 = clazz2;
 	}
 
-	public int getMerId() {
+	public Long getMerId() {
 		return this.merId;
 	}
 
-	public void setMerId(int merId) {
+	public void setMerId(Long merId) {
 		this.merId = merId;
 	}
 
@@ -115,11 +123,11 @@ public class MergedClass implements Serializable {
 		this.merMergeratio = merMergeratio;
 	}
 
-	public int getMerMindayperweek() {
+	public Long getMerMindayperweek() {
 		return this.merMindayperweek;
 	}
 
-	public void setMerMindayperweek(int merMindayperweek) {
+	public void setMerMindayperweek(Long merMindayperweek) {
 		this.merMindayperweek = merMindayperweek;
 	}
 
@@ -193,6 +201,14 @@ public class MergedClass implements Serializable {
 		return mergedClassAvailabletime;
 	}
 
+	public List<MergedClassAvailabletimeLocation> addAllMergedClassAvailabletime(List<MergedClassAvailabletimeLocation> mergedClassAvailabletimes) {
+		for (MergedClassAvailabletimeLocation mergedClassAvailabletime : mergedClassAvailabletimes) {
+			getMergedClassAvailabletimes().add(mergedClassAvailabletime);
+			mergedClassAvailabletime.setMergedClass(this);
+		}
+		return mergedClassAvailabletimes;
+	}
+
 	public Class getClazz1() {
 		return clazz1;
 	}
@@ -209,11 +225,11 @@ public class MergedClass implements Serializable {
 		this.clazz2 = clazz2;
 	}
 
-	public Integer getMerTurPrgId() {
+	public Long getMerTurPrgId() {
 		return merTurPrgId;
 	}
 
-	public void setMerTurPrgId(Integer merTurPrgId) {
+	public void setMerTurPrgId(Long merTurPrgId) {
 		this.merTurPrgId = merTurPrgId;
 	}
 
@@ -247,11 +263,11 @@ public class MergedClass implements Serializable {
 		this.numberOfAvaDays = numberOfAvaDays;
 	}
 
-	public Set<Integer> getAvaDays() {
+	public Set<Long> getAvaDays() {
 		return avaDays;
 	}
 
-	public void setAvaDays(Set<Integer> avaDays) {
+	public void setAvaDays(Set<Long> avaDays) {
 		this.avaDays = avaDays;
 	}
 
@@ -299,12 +315,37 @@ public class MergedClass implements Serializable {
 		return classTutorUniversities;
 	}
 
-	public Integer getMacDays() {
-		return macDays;
+	public Integer getMaxDays() {
+		return maxDays;
 	}
 
-	public void setMacDays(Integer macDays) {
-		this.macDays = macDays;
+	public void setMaxDays(Integer maxDays) {
+		this.maxDays = maxDays;
+	}
+
+
+	public String getMerType() {
+		return merType;
+	}
+
+	public void setMerType(String merType) {
+		this.merType = merType;
+	}
+
+	public Integer getRemainDays1() {
+		return remainDays1;
+	}
+
+	public void setRemainDays1(Integer remainDays1) {
+		this.remainDays1 = remainDays1;
+	}
+
+	public Integer getRemainDays2() {
+		return remainDays2;
+	}
+
+	public void setRemainDays2(Integer remainDays2) {
+		this.remainDays2 = remainDays2;
 	}
 
 	@Override

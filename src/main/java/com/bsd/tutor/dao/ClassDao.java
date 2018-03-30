@@ -33,7 +33,7 @@ public class ClassDao {
     }
 
 
-    public static Integer create(Class e) {
+    public static Long create(Class e) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         session.beginTransaction();
         session.save(e);
@@ -55,7 +55,7 @@ public class ClassDao {
     }
 
 
-    public static Class findByID(Integer id) {
+    public static Class findByID(Long id) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         Class e = (Class) session.load(Class.class, id);
         session.close();

@@ -6,6 +6,7 @@ package com.bsd.tutor.dao;
 
 import com.bsd.tutor.model.Class;
 import com.bsd.tutor.model.MergedClass;
+import com.bsd.tutor.model.RecommendStatus;
 import com.bsd.tutor.utils.HibernateUtil;
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -33,7 +34,7 @@ public class MergedClassDao {
     }
 
 
-    public static Integer create(MergedClass e) {
+    public static Long create(MergedClass e) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         session.beginTransaction();
         session.save(e);
@@ -67,7 +68,7 @@ public class MergedClassDao {
     }
 
 
-    public static MergedClass findByID(Integer id) {
+    public static MergedClass findByID(Long id) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         MergedClass e = (MergedClass) session.load(MergedClass.class, id);
         session.close();

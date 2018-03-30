@@ -1,6 +1,8 @@
 package com.bsd.tutor.utils;
 
 import com.sun.javafx.binding.StringFormatter;
+import com.sun.javafx.geom.ConcentricShapePair;
+import com.sun.tools.javac.code.Attribute;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -194,4 +196,61 @@ public class DateTimeUtils {
         return time;
     }
 
+    public static Double[] canManageClassInDay(Double start1, Double end1, Double start2, Double end2, Double duration1, Double duration2, Double travelTime){
+        Double[] time = new Double[4];
+        Date expectedStartCls1 = doubleToDate(start1);
+        Date expectedEndCls1 = addTime(start1,duration1);
+        Date expectedStartCls2 = addTime(start1,duration1,travelTime);
+        Date expectedEndCls2 = addTime(start1,duration1,travelTime,duration2);
+
+        Date dStart1 = doubleToDate(start1);
+        Date dStart2 = doubleToDate(start2);
+        Date dEnd1 = doubleToDate(end1);
+        Date dEnd2 = doubleToDate(end2);
+
+     //   while (!(inTime(expectedStartCls1, dStart1, dEnd1) && inTime(expectedEndCls1, dStart1, dEnd1) && inTime(expectedStartCls2, dStart2, dEnd2) && inTime(expectedEndCls2, dStart2, dEnd2))) {
+        while(expectedEndCls2.before(dEnd2) || expectedEndCls2.equals(dEnd2)) {
+            /*System.out.println("Expect Class1 : "+Double.valueOf(DateTimeUtils.hourFormat(expectedStartCls1)) + "-"+Double.valueOf(DateTimeUtils.hourFormat(expectedEndCls1)));
+            System.out.println("Expect Class2 : "+Double.valueOf(DateTimeUtils.hourFormat(expectedStartCls2)) + "-"+Double.valueOf(DateTimeUtils.hourFormat(expectedEndCls2)));
+            System.out.println("Ava Class1 : "+start1 + "-"+end1);
+            System.out.println("Ava Class2 : "+start2 + "-"+end2);*/
+            if (inTime(expectedStartCls1, dStart1, dEnd1) && inTime(expectedEndCls1, dStart1, dEnd1) && inTime(expectedStartCls2, dStart2, dEnd2) && inTime(expectedEndCls2, dStart2, dEnd2)) {
+                time[0] = Double.parseDouble(DateTimeUtils.hourFormat(expectedStartCls1));
+                time[1] = Double.parseDouble(DateTimeUtils.hourFormat(expectedEndCls1));
+                time[2] = Double.parseDouble(DateTimeUtils.hourFormat(expectedStartCls2));
+                time[3] = Double.parseDouble(DateTimeUtils.hourFormat(expectedEndCls2));
+                return time;
+
+            }
+            expectedStartCls1 = addTime( Double.parseDouble(hourFormat(expectedStartCls1)), Constants.TIME_DIFF);
+            expectedEndCls1 = addTime( Double.parseDouble(hourFormat(expectedStartCls1)), duration1);
+            expectedStartCls2 = addTime( Double.parseDouble(hourFormat(expectedStartCls1)),duration1,travelTime);
+            expectedEndCls2 = addTime( Double.parseDouble(hourFormat(expectedStartCls1)),duration1,travelTime,duration2);
+
+        }
+
+        return time;
+    }
+    public static Double roundUp(long seconds){
+        Double secondD = Double.valueOf(seconds);
+
+        Double hours = convertSecondsToHours(secondD);
+        System.out.println("Convert to hours "+hours);
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH.mm");
+        String strTime = new DecimalFormat("00.00").format(hours).toString();
+        try {
+            Date convertTime = timeFormat.parse(strTime);
+            int mod = convertTime.getMinutes() / Constants.ROUNDUP_TRAVELTIME;
+            System.out.println("MINS : "+convertTime.getMinutes());
+            int roundUpMins = mod * Constants.ROUNDUP_TRAVELTIME;
+            System.out.println("ROUND : "+(roundUpMins + Constants.ROUNDUP_TRAVELTIME));
+            convertTime.setMinutes(roundUpMins + Constants.ROUNDUP_TRAVELTIME);
+
+            Double hoursD = Double.parseDouble(hourFormat(convertTime));
+            return hoursD*3600;
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

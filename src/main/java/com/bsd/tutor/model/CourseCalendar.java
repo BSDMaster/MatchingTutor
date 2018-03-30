@@ -18,7 +18,7 @@ public class CourseCalendar implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="CAR_ID")
-	private Integer carId;
+	private Long carId;
 
 	@Temporal(TemporalType.DATE)
 	@Column(name="CAR_DATE")
@@ -47,11 +47,11 @@ public class CourseCalendar implements Serializable {
 	public CourseCalendar() {
 	}
 
-	public Integer getCarId() {
+	public Long getCarId() {
 		return this.carId;
 	}
 
-	public void setCarId(Integer carId) {
+	public void setCarId(Long carId) {
 		this.carId = carId;
 	}
 

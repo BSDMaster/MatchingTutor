@@ -17,7 +17,7 @@ public class Parent implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="PAR_ID")
-	private Integer parId;
+	private Long parId;
 
 	@Column(name="PAR_EMAIL")
 	private String parEmail;
@@ -41,11 +41,11 @@ public class Parent implements Serializable {
 	public Parent() {
 	}
 
-	public Integer getParId() {
+	public Long getParId() {
 		return this.parId;
 	}
 
-	public void setParId(Integer parId) {
+	public void setParId(Long parId) {
 		this.parId = parId;
 	}
 

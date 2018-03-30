@@ -19,7 +19,7 @@ public class Subject implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="SUBJ_ID")
-	private Integer subjId;
+	private Long subjId;
 
 	@Column(name="SUBJ_ACTIVE_FLAG")
 	private String subjActiveFlag;
@@ -46,11 +46,11 @@ public class Subject implements Serializable {
 	public Subject() {
 	}
 
-	public Integer getSubjId() {
+	public Long getSubjId() {
 		return this.subjId;
 	}
 
-	public void setSubjId(Integer subjId) {
+	public void setSubjId(Long subjId) {
 		this.subjId = subjId;
 	}
 

@@ -35,7 +35,7 @@ public class EmployeeDao {
     }
 
 
-    public static Integer create(Employee e) {
+    public static Long create(Employee e) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         session.beginTransaction();
         session.save(e);
@@ -68,7 +68,7 @@ public class EmployeeDao {
 
     }
 
-    public static void delete(Integer id) {
+    public static void delete(Long id) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         session.beginTransaction();
         Employee e = findByID(id);
@@ -79,7 +79,7 @@ public class EmployeeDao {
 
     }
 
-    public static Employee findByID(Integer id) {
+    public static Employee findByID(Long id) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         Employee e = (Employee) session.load(Employee.class, id);
         session.close();

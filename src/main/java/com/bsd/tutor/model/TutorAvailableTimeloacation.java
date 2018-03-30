@@ -17,10 +17,10 @@ public class TutorAvailableTimeloacation implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="TAV_ID")
-	private Integer tavId;
+	private Long tavId;
 
 	@Column(name="TAV_DAY_ID")
-	private Integer tavDayId;
+	private Long tavDayId;
 
 	@Column(name="TAV_END_TIME")
 	private Double tavEndTime;
@@ -66,19 +66,19 @@ public class TutorAvailableTimeloacation implements Serializable {
 	public TutorAvailableTimeloacation() {
 	}
 
-	public Integer getTavId() {
+	public Long getTavId() {
 		return this.tavId;
 	}
 
-	public void setTavId(Integer tavId) {
+	public void setTavId(Long tavId) {
 		this.tavId = tavId;
 	}
 
-	public Integer getTavDayId() {
+	public Long getTavDayId() {
 		return this.tavDayId;
 	}
 
-	public void setTavDayId(Integer tavDayId) {
+	public void setTavDayId(Long tavDayId) {
 		this.tavDayId = tavDayId;
 	}
 

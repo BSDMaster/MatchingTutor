@@ -17,10 +17,10 @@ public class StudentAvailableTimelocation implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="SAV_ID")
-	private Integer savId;
+	private Long savId;
 
 	@Column(name="SAV_DAY_ID")
-	private Integer savDayId;
+	private Long savDayId;
 
 	@Column(name="SAV_END_TIME")
 	private Double savEndTime;
@@ -45,19 +45,19 @@ public class StudentAvailableTimelocation implements Serializable {
 	public StudentAvailableTimelocation() {
 	}
 
-	public Integer getSavId() {
+	public Long getSavId() {
 		return this.savId;
 	}
 
-	public void setSavId(Integer savId) {
+	public void setSavId(Long savId) {
 		this.savId = savId;
 	}
 
-	public Integer getSavDayId() {
+	public Long getSavDayId() {
 		return this.savDayId;
 	}
 
-	public void setSavDayId(Integer savDayId) {
+	public void setSavDayId(Long savDayId) {
 		this.savDayId = savDayId;
 	}
 

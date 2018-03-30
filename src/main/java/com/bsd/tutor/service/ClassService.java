@@ -64,7 +64,7 @@ public class ClassService {
         }
 
         // Tutor’s year experience
-        recTutor.setRecTutorYearExp(0);
+        recTutor.setRecTutorYearExp(0L);
         if (cls.getClsTutorExp() == null) {
             recTutor.setRecTutorExpFlag(Constants.FLAG_YES);
         }else {
@@ -85,17 +85,18 @@ public class ClassService {
         return recTutor;
     }
 
-    public static RecommendTutor filterTutorsByAvailableDay(Integer days, Double classDuration, List<StudentAvailableTimelocation> sAvas, Tutor tutor) {
+    public static RecommendTutor filterTutorsByAvailableDay(Long days, Double classDuration, List<StudentAvailableTimelocation> sAvas, Tutor tutor) {
         GoogleAPIMapServices googleService = new GoogleAPIMapServices();
 
         //	System.out.println("Tutor ID : "+tutor.getTurId());
         GoogleAPIMapServices googleMapService = new GoogleAPIMapServices();
         List<RecommendTimelocation> recTimeLoc = new ArrayList<>();
         RecommendTutor recTutor = new RecommendTutor();
+
         recTutor.setTutor(tutor);
         recTutor.setNumOfDays(days);
         recTutor.setRecommendTimelocations(recTimeLoc);
-        Set<Integer> daySet = new HashSet<>();
+        Set<Long> daySet = new HashSet<>();
 
         for (StudentAvailableTimelocation sAva : sAvas) {
 
@@ -130,9 +131,10 @@ public class ClassService {
 
                             Date expectBackTime = DateTimeUtils.addTime(daysMatch.getTavStartTime(), duration1, classDuration, duration2);
                             System.out.println("Expect time back to tutor location : " + DateTimeUtils.hourFormat(expectBackTime));
-                            if (!expectDuration.after(DateTimeUtils.doubleToDate(overlapHours)) && !expectFinishClassTime.after(DateTimeUtils.doubleToDate(daysMatch.getTavEndTime()))) {
+                            if (!expectDuration.after(DateTimeUtils.doubleToDate(overlapHours)) && !expectBackTime.after(DateTimeUtils.doubleToDate(daysMatch.getTavEndTime()))) {
                                 System.out.println("* 1 Able to teach on the day");
                                 RecommendTimelocation recTime = new RecommendTimelocation();
+                                recTime.setRecdClassStart(Constants.TIMELOCTYPE_NORMAL);
                                 recTime.setRecdTraveltime1(duration1);
                                 recTime.setRecdTraveltime2(duration2);
                                 recTime.setRecdTraveltime(duration1 + duration2);
@@ -141,6 +143,12 @@ public class ClassService {
                                 recTime.setRecdEnd(Double.parseDouble(DateTimeUtils.hourFormat(expectFinishClassTime)));
                                 recTime.setRecdTravelStart(daysMatch.getTavStartTime());
                                 recTime.setRecdTravelEnd(Double.parseDouble(DateTimeUtils.hourFormat(expectBackTime)));
+                                recTime.setRecdAvaStart(Double.parseDouble(DateTimeUtils.hourFormat(expectStartClassTime)));
+                                recTime.setRecdAvaEnd(endTime);
+                                recTime.setRecdLoc(sAva.getSavLocation());
+                                recTime.setRecdLat(sAva.getSavLat());
+                                recTime.setRecdLong(sAva.getSavLong());
+                                recTime.setDuration(classDuration);
                                 recTutor.addRecommendTimelocation(recTime);
                                 daySet.add(sAva.getSavDayId());
                             }
@@ -158,6 +166,7 @@ public class ClassService {
                             if (!expectStartTravelTime.before(DateTimeUtils.doubleToDate(daysMatch.getTavStartTime())) && !expectBackTime.after(DateTimeUtils.doubleToDate(daysMatch.getTavEndTime()))) {
                                 System.out.println("* 2 Able to teach on the day");
                                 RecommendTimelocation recTime = new RecommendTimelocation();
+                                recTime.setRecdClassStart(Constants.TIMELOCTYPE_NORMAL);
                                 recTime.setRecdTraveltime1(duration1);
                                 recTime.setRecdTraveltime2(duration2);
                                 recTime.setRecdTraveltime(duration1 + duration2);
@@ -166,6 +175,12 @@ public class ClassService {
                                 recTime.setRecdEnd(Double.parseDouble(DateTimeUtils.hourFormat(expectFinishClassTime)));
                                 recTime.setRecdTravelStart(Double.parseDouble(DateTimeUtils.hourFormat(expectStartTravelTime)));
                                 recTime.setRecdTravelEnd(Double.parseDouble(DateTimeUtils.hourFormat(expectBackTime)));
+                                recTime.setRecdAvaStart(sAva.getSavStartTime());
+                                recTime.setRecdAvaEnd(endTime);
+                                recTime.setRecdLoc(sAva.getSavLocation());
+                                recTime.setRecdLat(sAva.getSavLat());
+                                recTime.setRecdLong(sAva.getSavLong());
+                                recTime.setDuration(classDuration);
                                 recTutor.addRecommendTimelocation(recTime);
                                 daySet.add(sAva.getSavDayId());
                             }

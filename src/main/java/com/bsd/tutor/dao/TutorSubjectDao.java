@@ -33,7 +33,7 @@ public class TutorSubjectDao {
         System.out.println("Found " + tutorSubjects.size() + " TutorSubject");
         return tutorSubjects;
     }
-    public static List<TutorSubject> findBySubject(Integer subjectId, Integer groupId) {
+    public static List<TutorSubject> findBySubject(Long subjectId, Long groupId) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         @SuppressWarnings("unchecked")
         String hql = "FROM TutorSubject WHERE subjectDetail.subject.subjId=:subjectID AND subjectDetail.subjectGroup.grpId=:groupID";
@@ -47,7 +47,7 @@ public class TutorSubjectDao {
     }
 
 
-    public static Integer create(TutorSubject e) {
+    public static Long create(TutorSubject e) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         session.beginTransaction();
         session.save(e);
@@ -69,7 +69,7 @@ public class TutorSubjectDao {
     }
 
 
-    public static TutorSubject findByID(Integer id) {
+    public static TutorSubject findByID(Long id) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         TutorSubject e = (TutorSubject) session.load(TutorSubject.class, id);
         session.close();

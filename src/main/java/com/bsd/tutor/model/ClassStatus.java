@@ -18,7 +18,7 @@ public class ClassStatus implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="COS_STATUS_ID")
-	private Integer cosStatusId;
+	private Long cosStatusId;
 
 	@Column(name="COS_STATUS_NAME")
 	private String cosStatusName;
@@ -30,11 +30,11 @@ public class ClassStatus implements Serializable {
 	public ClassStatus() {
 	}
 
-	public Integer getCosStatusId() {
+	public Long getCosStatusId() {
 		return this.cosStatusId;
 	}
 
-	public void setCosStatusId(Integer cosStatusId) {
+	public void setCosStatusId(Long cosStatusId) {
 		this.cosStatusId = cosStatusId;
 	}
 

@@ -16,7 +16,7 @@ public class TutorSubject implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="TSBJ_ID")
-	private Integer tsbjId;
+	private Long tsbjId;
 
 	@ManyToOne(fetch=FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name="TSBJ_TUR_ID")
@@ -28,25 +28,25 @@ public class TutorSubject implements Serializable {
 
 
 	@Column(name="TSBJ_EXP")
-	private Integer tsbjExp;
+	private Long tsbjExp;
 
 	public TutorSubject() {
 	}
 
 
-	public Integer getTsbjExp() {
+	public Long getTsbjExp() {
 		return this.tsbjExp;
 	}
 
-	public void setTsbjExp(Integer tsbjExp) {
+	public void setTsbjExp(Long tsbjExp) {
 		this.tsbjExp = tsbjExp;
 	}
 
-	public Integer getTsbjId() {
+	public Long getTsbjId() {
 		return tsbjId;
 	}
 
-	public void setTsbjId(Integer tsbjId) {
+	public void setTsbjId(Long tsbjId) {
 		this.tsbjId = tsbjId;
 	}
 

@@ -17,7 +17,7 @@ public class University implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="UNI_ID")
-	private Integer uniId;
+	private Long uniId;
 
 	@Column(name="UNI_NAME")
 	private String uniName;
@@ -33,11 +33,11 @@ public class University implements Serializable {
 	public University() {
 	}
 
-	public Integer getUniId() {
+	public Long getUniId() {
 		return this.uniId;
 	}
 
-	public void setUniId(Integer uniId) {
+	public void setUniId(Long uniId) {
 		this.uniId = uniId;
 	}
 

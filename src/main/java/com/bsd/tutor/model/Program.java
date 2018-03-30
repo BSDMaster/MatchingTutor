@@ -17,7 +17,7 @@ public class Program implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="PRG_ID")
-	private Integer prgId;
+	private Long prgId;
 
 	@Column(name="PRG_DESC")
 	private String prgDesc;
@@ -29,11 +29,11 @@ public class Program implements Serializable {
 	public Program() {
 	}
 
-	public Integer getPrgId() {
+	public Long getPrgId() {
 		return this.prgId;
 	}
 
-	public void setPrgId(Integer prgId) {
+	public void setPrgId(Long prgId) {
 		this.prgId = prgId;
 	}
 

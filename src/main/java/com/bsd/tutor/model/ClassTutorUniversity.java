@@ -17,7 +17,7 @@ public class ClassTutorUniversity implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="TUU_ID")
-	private Integer tuuId;
+	private Long tuuId;
 
 	//bi-directional many-to-one association to Class
 	@ManyToOne(fetch=FetchType.EAGER)
@@ -38,11 +38,11 @@ public class ClassTutorUniversity implements Serializable {
 	public ClassTutorUniversity() {
 	}
 
-	public Integer getTuuId() {
+	public Long getTuuId() {
 		return tuuId;
 	}
 
-	public void setTuuId(Integer tuuId) {
+	public void setTuuId(Long tuuId) {
 		this.tuuId = tuuId;
 	}
 

@@ -19,7 +19,7 @@ public class SubjectGroupDetail implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="GRPD_ID")
-	private Integer grpdId;
+	private Long grpdId;
 
 	@Column(name="GRPD_ACTIVE_FLAG")
 	private String grpdActiveFlag;
@@ -47,11 +47,11 @@ public class SubjectGroupDetail implements Serializable {
 	public SubjectGroupDetail() {
 	}
 
-	public Integer getGrpdId() {
+	public Long getGrpdId() {
 		return this.grpdId;
 	}
 
-	public void setGrpdId(Integer grpdId) {
+	public void setGrpdId(Long grpdId) {
 		this.grpdId = grpdId;
 	}
 

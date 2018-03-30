@@ -20,7 +20,7 @@ public class Student implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="STU_ID")
-	private Integer stuId;
+	private Long stuId;
 
 	@Column(name="STU_EMAIL")
 	private String stuEmail;
@@ -32,7 +32,7 @@ public class Student implements Serializable {
 	private String stuLastname;
 
 	@Column(name="STU_LEVEL")
-	private Integer stuLevel;
+	private Long stuLevel;
 
 	@Column(name="STU_NICKNAME")
 	private String stuNickname;
@@ -66,11 +66,11 @@ public class Student implements Serializable {
 	public Student() {
 	}
 
-	public Integer getStuId() {
+	public Long getStuId() {
 		return this.stuId;
 	}
 
-	public void setStuId(Integer stuId) {
+	public void setStuId(Long stuId) {
 		this.stuId = stuId;
 	}
 
@@ -98,11 +98,11 @@ public class Student implements Serializable {
 		this.stuLastname = stuLastname;
 	}
 
-	public Integer getStuLevel() {
+	public Long getStuLevel() {
 		return this.stuLevel;
 	}
 
-	public void setStuLevel(Integer stuLevel) {
+	public void setStuLevel(Long stuLevel) {
 		this.stuLevel = stuLevel;
 	}
 

@@ -19,14 +19,14 @@ public class RecommendTutor implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="REC_ID")
-	private Integer recId;
+	private Long recId;
 
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name="REC_DATETIME")
 	private Date recDatetime = new Date();
 
 	@Column(name="REC_ORDER")
-	private Integer recOrder;
+	private Long recOrder;
 
 	@Column(name="REC_TUTOR_EXP_FLAG")
 	private String recTutorExpFlag;
@@ -35,7 +35,7 @@ public class RecommendTutor implements Serializable {
 	private String recTutorFacultyFlag;
 
 	@Column(name="REC_TUTOR_ORDER")
-	private Integer recTutorOrder;
+	private Long recTutorOrder;
 
 	@Column(name="REC_TUTOR_SEX_FLAG")
 	private String recTutorSexFlag;
@@ -44,7 +44,7 @@ public class RecommendTutor implements Serializable {
 	private String recTutorUniversityFlag;
 
 	@Column(name="REC_TUTOR_YEAR_EXP")
-	private Integer recTutorYearExp;
+	private Long recTutorYearExp;
 
 	//bi-directional many-to-one association to RecommendTimelocation
 	@OneToMany(mappedBy="recommendTutor", fetch=FetchType.EAGER, cascade = CascadeType.ALL)
@@ -80,16 +80,21 @@ public class RecommendTutor implements Serializable {
 	private Double availableDays;
 
 	@Transient
-	private Integer numOfDays = 0;
+	private Long numOfDays = 0L;
+
+	@Transient
+	private  boolean tmpFlag = false;
+
+	@Transient RecommendTutor ownerRecTutor = null;
 
 	public RecommendTutor() {
 	}
 
-	public Integer getRecId() {
+	public Long getRecId() {
 		return this.recId;
 	}
 
-	public void setRecId(Integer recId) {
+	public void setRecId(Long recId) {
 		this.recId = recId;
 	}
 
@@ -101,11 +106,11 @@ public class RecommendTutor implements Serializable {
 		this.recDatetime = recDatetime;
 	}
 
-	public Integer getRecOrder() {
+	public Long getRecOrder() {
 		return this.recOrder;
 	}
 
-	public void setRecOrder(Integer recOrder) {
+	public void setRecOrder(Long recOrder) {
 		this.recOrder = recOrder;
 	}
 
@@ -125,11 +130,11 @@ public class RecommendTutor implements Serializable {
 		this.recTutorFacultyFlag = recTutorFacultyFlag;
 	}
 
-	public Integer getRecTutorOrder() {
+	public Long getRecTutorOrder() {
 		return this.recTutorOrder;
 	}
 
-	public void setRecTutorOrder(Integer recTutorOrder) {
+	public void setRecTutorOrder(Long recTutorOrder) {
 		this.recTutorOrder = recTutorOrder;
 	}
 
@@ -149,11 +154,11 @@ public class RecommendTutor implements Serializable {
 		this.recTutorUniversityFlag = recTutorUniversityFlag;
 	}
 
-	public Integer getRecTutorYearExp() {
+	public Long getRecTutorYearExp() {
 		return this.recTutorYearExp;
 	}
 
-	public void setRecTutorYearExp(Integer recTutorYearExp) {
+	public void setRecTutorYearExp(Long recTutorYearExp) {
 		this.recTutorYearExp = recTutorYearExp;
 	}
 
@@ -163,6 +168,16 @@ public class RecommendTutor implements Serializable {
 
 	public void setRecommendTimelocations(List<RecommendTimelocation> recommendTimelocations) {
 		this.recommendTimelocations = recommendTimelocations;
+	}
+
+
+	public List<RecommendTimelocation> addAllRecommendTimelocation(List<RecommendTimelocation> recommendTimelocations) {
+		for (RecommendTimelocation recommendTimelocation : recommendTimelocations) {
+			getRecommendTimelocations().add(recommendTimelocation);
+			recommendTimelocation.setRecommendTutor(this);
+
+		}
+		return recommendTimelocations;
 	}
 
 	public RecommendTimelocation addRecommendTimelocation(RecommendTimelocation recommendTimelocation) {
@@ -257,11 +272,27 @@ public class RecommendTutor implements Serializable {
 		this.availableDays = availableDays;
 	}
 
-	public Integer getNumOfDays() {
+	public Long getNumOfDays() {
 		return numOfDays;
 	}
 
-	public void setNumOfDays(Integer numOfDays) {
+	public void setNumOfDays(Long numOfDays) {
 		this.numOfDays = numOfDays;
+	}
+
+	public boolean isTmpFlag() {
+		return tmpFlag;
+	}
+
+	public void setTmpFlag(boolean tmpFlag) {
+		this.tmpFlag = tmpFlag;
+	}
+
+	public RecommendTutor getOwnerRecTutor() {
+		return ownerRecTutor;
+	}
+
+	public void setOwnerRecTutor(RecommendTutor ownerRecTutor) {
+		this.ownerRecTutor = ownerRecTutor;
 	}
 }

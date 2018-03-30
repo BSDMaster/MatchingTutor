@@ -18,7 +18,7 @@ public class FacultyOfUniversity implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="FUN_ID")
-	private Integer funId;
+	private Long funId;
 
 	//bi-directional many-to-one association to Faculty
 	@ManyToOne(fetch=FetchType.EAGER)
@@ -37,11 +37,11 @@ public class FacultyOfUniversity implements Serializable {
 	public FacultyOfUniversity() {
 	}
 
-	public Integer getFunId() {
+	public Long getFunId() {
 		return this.funId;
 	}
 
-	public void setFunId(Integer funId) {
+	public void setFunId(Long funId) {
 		this.funId = funId;
 	}
 

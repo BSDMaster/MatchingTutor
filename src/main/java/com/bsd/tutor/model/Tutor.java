@@ -21,7 +21,7 @@ public class Tutor implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="TUR_ID")
-	private Integer turId;
+	private Long turId;
 
 	@Column(name="TUR_ACTIVE_FLAG")
 	private String turActiveFlag;
@@ -104,11 +104,11 @@ public class Tutor implements Serializable {
 	public Tutor() {
 	}
 
-	public Integer getTurId() {
+	public Long getTurId() {
 		return this.turId;
 	}
 
-	public void setTurId(Integer turId) {
+	public void setTurId(Long turId) {
 		this.turId = turId;
 	}
 

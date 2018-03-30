@@ -47,6 +47,6 @@
        <mapping class="com.bsd.tutor.model.MergedClass"/>
        <mapping class="com.bsd.tutor.model.MergedClassAvailabletimeLocation"/>
        <mapping class="com.bsd.tutor.model.TravelTime"/>
-       <mapping class="com.bsd.tutor.model.RecommendStatus"/>
+       <mapping class="com.bsd.tutor.webservices.model.RecommendStatus"/>
 </session-factory>
 </hibernate-configuration>

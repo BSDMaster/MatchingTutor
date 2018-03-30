@@ -17,7 +17,7 @@ public class TutorMatching implements Serializable {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(name="MAT_ID")
-    private Integer matId;
+    private Long matId;
 
 	@Column(name="MAT_TUTOR_SEX_FLAG")
 	private String matTutorSexFlag;
@@ -32,16 +32,16 @@ public class TutorMatching implements Serializable {
     private String matTutorExpFlag;
 
     @Column(name="MAT_ORDER")
-    private Integer matOrder;
+    private Long matOrder;
 
 	public TutorMatching() {
 	}
 
-    public Integer getMatId() {
+    public Long getMatId() {
         return matId;
     }
 
-    public void setMatId(Integer matId) {
+    public void setMatId(Long matId) {
         this.matId = matId;
     }
 
@@ -78,11 +78,11 @@ public class TutorMatching implements Serializable {
         this.matTutorExpFlag = matTutorExpFlag;
     }
 
-    public Integer getMatOrder() {
+    public Long getMatOrder() {
         return matOrder;
     }
 
-    public void setMatOrder(Integer matOrder) {
+    public void setMatOrder(Long matOrder) {
         this.matOrder = matOrder;
     }
 

@@ -17,10 +17,10 @@ public class MergedClassAvailabletimeLocation implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="MEAV_ID")
-	private Integer meavId;
+	private Long meavId;
 
 	@Column(name="MEAV_DAY_ID")
-	private Integer meavDayId;
+	private Long meavDayId;
 
 	@Column(name="MEAV_END_TIME")
 	private Double meavEndTime;
@@ -32,7 +32,7 @@ public class MergedClassAvailabletimeLocation implements Serializable {
 	private Double mervStartTime;
 
 	@Column(name="MERV_CLS_START")
-	private Integer mervClsStart;
+	private Long mervClsStart;
 
 	@Column(name="MERV_LAT")
 	private Double mervLat;
@@ -50,23 +50,23 @@ public class MergedClassAvailabletimeLocation implements Serializable {
 
 	public MergedClassAvailabletimeLocation() {
 	}
-	public MergedClassAvailabletimeLocation(MergedClass mergedClass, Integer meavDayId) {
+	public MergedClassAvailabletimeLocation(MergedClass mergedClass, Long meavDayId) {
 		this.mergedClass = mergedClass;
 		this.meavDayId = meavDayId;
 	}
-	public Integer getMeavId() {
+	public Long getMeavId() {
 		return this.meavId;
 	}
 
-	public void setMeavId(Integer meavId) {
+	public void setMeavId(Long meavId) {
 		this.meavId = meavId;
 	}
 
-	public Integer getMeavDayId() {
+	public Long getMeavDayId() {
 		return this.meavDayId;
 	}
 
-	public void setMeavDayId(Integer meavDayId) {
+	public void setMeavDayId(Long meavDayId) {
 		this.meavDayId = meavDayId;
 	}
 
@@ -102,11 +102,11 @@ public class MergedClassAvailabletimeLocation implements Serializable {
 		this.mergedClass = mergedClass;
 	}
 
-	public Integer getMervClsStart() {
+	public Long getMervClsStart() {
 		return mervClsStart;
 	}
 
-	public void setMervClsStart(Integer mervClsStart) {
+	public void setMervClsStart(Long mervClsStart) {
 		this.mervClsStart = mervClsStart;
 	}
 

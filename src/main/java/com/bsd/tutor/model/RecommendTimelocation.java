@@ -18,10 +18,10 @@ public class RecommendTimelocation implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="RECD_ID")
-	private Integer recdId;
+	private Long recdId;
 
 	@Column(name="RECD_DAY_ID")
-	private Integer recdDayId;
+	private Long recdDayId;
 
 	@Column(name="RECD_END")
 	private Double recdEnd;
@@ -44,6 +44,18 @@ public class RecommendTimelocation implements Serializable {
 	@Column(name="RECD_TRAVELEND")
 	private Double recdTravelEnd;
 
+	@Column(name="RECD_LOC")
+	private String recdLoc;
+
+	@Column(name="RECD_LAT")
+	private Double recdLat;
+
+	@Column(name="RECD_LONG")
+	private Double recdLong;
+
+	@Column(name="RECD_CLASS_START")
+	private Long recdClassStart;
+
 	//bi-directional many-to-one association to RecommendTutor
 	@ManyToOne(fetch=FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name="RECD_REC_ID")
@@ -52,23 +64,34 @@ public class RecommendTimelocation implements Serializable {
 	@Transient
 	private boolean isOverlapse;
 
+	@Transient
+	private Double recdAvaStart;
+
+	@Transient
+	private Double recdAvaEnd;
+
+	@Transient
+	private Double duration;
+
+	@Transient
+	private long numOfDup;
 
 	public RecommendTimelocation() {
 	}
 
-	public Integer getRecdId() {
+	public Long getRecdId() {
 		return this.recdId;
 	}
 
-	public void setRecdId(Integer recdId) {
+	public void setRecdId(Long recdId) {
 		this.recdId = recdId;
 	}
 
-	public Integer getRecdDayId() {
+	public Long getRecdDayId() {
 		return this.recdDayId;
 	}
 
-	public void setRecdDayId(Integer recdDayId) {
+	public void setRecdDayId(Long recdDayId) {
 		this.recdDayId = recdDayId;
 	}
 
@@ -142,5 +165,69 @@ public class RecommendTimelocation implements Serializable {
 
 	public void setRecdTravelEnd(Double recdTravelEnd) {
 		this.recdTravelEnd = recdTravelEnd;
+	}
+
+	public String getRecdLoc() {
+		return recdLoc;
+	}
+
+	public void setRecdLoc(String recdLoc) {
+		this.recdLoc = recdLoc;
+	}
+
+	public Double getRecdLat() {
+		return recdLat;
+	}
+
+	public void setRecdLat(Double recdLat) {
+		this.recdLat = recdLat;
+	}
+
+	public Double getRecdLong() {
+		return recdLong;
+	}
+
+	public void setRecdLong(Double recdLong) {
+		this.recdLong = recdLong;
+	}
+
+	public Long getRecdClassStart() {
+		return recdClassStart;
+	}
+
+	public void setRecdClassStart(Long recdClassStart) {
+		this.recdClassStart = recdClassStart;
+	}
+
+	public Double getRecdAvaStart() {
+		return recdAvaStart;
+	}
+
+	public void setRecdAvaStart(Double recdAvaStart) {
+		this.recdAvaStart = recdAvaStart;
+	}
+
+	public Double getRecdAvaEnd() {
+		return recdAvaEnd;
+	}
+
+	public void setRecdAvaEnd(Double recdAvaEnd) {
+		this.recdAvaEnd = recdAvaEnd;
+	}
+
+	public Double getDuration() {
+		return duration;
+	}
+
+	public void setDuration(Double duration) {
+		this.duration = duration;
+	}
+
+	public long getNumOfDup() {
+		return numOfDup;
+	}
+
+	public void setNumOfDup(long numOfDup) {
+		this.numOfDup = numOfDup;
 	}
 }

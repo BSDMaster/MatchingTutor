@@ -15,6 +15,7 @@ import com.bsd.tutor.utils.ArrayListUtils;
 import com.bsd.tutor.utils.Constants;
 import com.bsd.tutor.utils.DateTimeUtils;
 import com.bsd.tutor.utils.GoogleMapUtils;
+import sun.jvm.hotspot.debugger.win32.coff.COFFLineNumber;
 //import org.slf4j.Logger;
 //import org.slf4j.LoggerFactory;
 import java.util.logging.Logger;
@@ -55,181 +56,54 @@ public class App {
 		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
 		System.out.println("2.2 Merged Class : Order merged class by specification : Same student, parent, subject and subject group, only subject, merged ratio (Max days/Total match days), min merged days");
 		// Step 1.4 : Order merged class
+		System.out.println("Merged size : "+mergedClasses.size());
 		System.out.println("Before Order");
 		for (MergedClass mergedClass : mergedClasses) {
-			System.out.println("Class : "+mergedClass.getClazz1().getClsId() + " , " + mergedClass.getClazz2().getClsId());
-
-
+			System.out.println("Class : "+mergedClass.toString() + " Type : "+mergedClass.getMerType());
 		}
-		mergedClasses.sort(Comparator.comparing(MergedClass::getMerSamestuFlag).reversed()
-				.thenComparing(Comparator.comparing(MergedClass::getMerSameparentFlag).reversed()
-						.thenComparing(Comparator.comparing(MergedClass::getMerSamesubgFlag).reversed()
-								.thenComparing(Comparator.comparing(MergedClass::getMerSamesubFlag).reversed()
-										.thenComparing(Comparator.comparing(MergedClass::getMerMergeratio)
-												.thenComparing(Comparator.comparing(MergedClass::getMerMindayperweek).reversed()))))));
+
+		mergedClasses.sort(Comparator.comparing(MergedClass::getMerMindayperweek).reversed());
+		mergedClasses.sort(Comparator.comparing(MergedClass::getMerMergeratio));
+		mergedClasses.sort(Comparator.comparing(MergedClass::getMerSamesubFlag).reversed());
+		mergedClasses.sort(Comparator.comparing(MergedClass::getMerSamesubgFlag).reversed());
+		mergedClasses.sort(Comparator.comparing(MergedClass::getMerSameparentFlag).reversed());
+		mergedClasses.sort(Comparator.comparing(MergedClass::getMerSamestuFlag).reversed());
+		mergedClasses.sort(Comparator.comparing(MergedClass::getMerType).reversed());
+
 		System.out.println("After Order");
 		for (MergedClass mergedClass : mergedClasses) {
-			System.out.println("Class : "+mergedClass.getClazz1().getClsId() + " , " + mergedClass.getClazz2().getClsId());
+			System.out.println("Class : "+mergedClass.toString() + " Type : "+mergedClass.getMerType());
 		}
+
 		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
-		System.out.println("2.3 Merged Class : Filter out merged classes which have the same class");
-		// Step 2.3 : Select option which class not duplicate
+		System.out.println("2.3 Merged Class : Matching Tutor");
+		// Step 2.3 : Matching tutor
 		List<MergedClass> selectedMergedClasses = new ArrayList<>();
-		if (mergedClasses.size() > 0) {
-			selectedMergedClasses.add(mergedClasses.get(0));
-		}
-		System.out.println("Before filter out / Size : "+mergedClasses.size());
-		for (MergedClass mergedClass : mergedClasses) {
-			System.out.println("Class : "+mergedClass.getClazz1().getClsId() + " , " + mergedClass.getClazz2().getClsId());
-			selectedMergedClasses = findDupList(selectedMergedClasses, mergedClass);
+		while(!mergedClasses.isEmpty()) {
+			MergedClass tmpMergedClass = mergedClasses.get(0);
 
-		}
-
-		System.out.println("After filter out / Size : "+selectedMergedClasses.size());
-		for (MergedClass mergedClass : selectedMergedClasses) {
-			System.out.println("Class : "+mergedClass.getClazz1().getClsId() + " , " + mergedClass.getClazz2().getClsId());
-
-		}
-
-		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
-		System.out.println("2.4 Merged Class : Matching Tutor");
-		// Step 1.6 : Matching tutor
-		TutorDao tutorDao = new TutorDao();
-		StudentAvailableTimelocationDao sTimelocationDao = new StudentAvailableTimelocationDao();
-		List<MergedClass> cancelledMergedClasses = new ArrayList<>();
-		for (MergedClass tmpMergedClass : selectedMergedClasses) {
-			// - case full merge
-			System.out.println("-----------------------------------------");
-			System.out.println("Merged Class : "+tmpMergedClass.toString());
-			System.out.println("-----------------------------------------");
-			Integer subjectId1 = tmpMergedClass.getClazz1().getSubject().getSubjId();
-			Integer groupDetailId1 = tmpMergedClass.getClazz1().getSubjectGroupDetail().getSubjectGroup().getGrpId();
-			Integer subjectId2 = tmpMergedClass.getClazz2().getSubject().getSubjId();
-			Integer groupDetailId2 = tmpMergedClass.getClazz2().getSubjectGroupDetail().getSubjectGroup().getGrpId();
-			List<Tutor> tutors1 = tutorDao.findBySubjectAndProgram(subjectId1, groupDetailId1,tmpMergedClass.getMerTurPrgId());
-			List<Tutor> tutors2 = tutorDao.findBySubjectAndProgram(subjectId2, groupDetailId2,tmpMergedClass.getMerTurPrgId());
-			List<Tutor> intersectTutors = ArrayListUtils.intersection(tutors1,tutors2);
-			System.out.println("2.4.1 Match subject and subject group - Match tutors : "+intersectTutors.size());
-			for (Tutor tutor : intersectTutors) {
-				System.out.println("- Tutor ID : "+tutor.getTurId());
-				for (TutorAvailableTimeloacation tAva : tutor.getTutorAvailableTimeloacations())
-				System.out.println("Tutor available / Day : "+tAva.getTavDayId() + " Time : " + tAva.getTavStartTime() + " - " + tAva.getTavEndTime());
-
-			}
-			System.out.println("-------------------------------------");
-			System.out.println("2.4.2 Match with tutor available days");
-			List<RecommendTutor> recommendTutors = new ArrayList<>();
-			tmpMergedClass.setRecommendTutors(recommendTutors);
-			if (tmpMergedClass.getMerMergeratio() >= 1) {
-				// Case full merged
-				for (Tutor tutor : intersectTutors) {
-					System.out.println("- Tutor ID : "+tutor.getTurId());
-					// Filter by tutor available days
-					RecommendTutor recTutor = mergedClassService.filterTutorsByAvailableDayMerged(tmpMergedClass.getMerMindayperweek(), tmpMergedClass.getClazz1().getClsDuration() + tmpMergedClass.getClazz2().getClsDuration(), tmpMergedClass.getMergedClassAvailabletimes(), tutor);
-					if (recTutor != null) {
-						tmpMergedClass.addRecommendTutor(recTutor);
-					}
-				}
-				System.out.println("-------------------------------------");
-				System.out.println("Tutor recommend size : "+tmpMergedClass.getRecommendTutors().size());
-				System.out.println("-------------------------------------");
-
-			}/*
-			// - case partial merge
-			else {
-				//
-				// For class 1
-				boolean isCls1Pass = true;
-				boolean isCls2Pass = true;
-				boolean isMergedPass = true;
-				List<RecommendTutor> tmpRecommendClass1 = new ArrayList<>();
-				List<RecommendTutor> tmpRecommendClass2 = new ArrayList<>();
-				List<RecommendTutor> tmpRecommendMerged = new ArrayList<>();
-
-				if (tmpMergedClass.getClazz1().getClsDayperweek() > tmpMergedClass.getNumberOfAvaDays()) {
-					// Find available days
-					Integer needDays = tmpMergedClass.getClazz1().getClsDayperweek() - tmpMergedClass.getNumberOfAvaDays();
-					// Get all days of class except the match days.
-					List<StudentAvailableTimelocation> sTimeLocations = sTimelocationDao.findByExceptSpecificDays(tmpMergedClass.getAvaDays());
-					if (sTimeLocations.size() >= needDays) {
-						for (Tutor tutor : intersectTutors) {
-							System.out.println("- Tutor ID : "+tutor.getTurId());
-							// Filter by tutor available days
-							RecommendTutor recTutor = filterTutorsByAvailableDay(needDays, tmpMergedClass.getClazz1().getClsDuration(), sTimeLocations, tutor);
-							if (recTutor != null) {
-								tmpRecommendClass1.add(recTutor);
-							}
-						}
-						if (tmpRecommendClass1.isEmpty()) {
-							isCls1Pass = false;
-						}
-					}
-				}
-				// For class 2
-				if (tmpMergedClass.getClazz2().getClsDayperweek() > tmpMergedClass.getNumberOfAvaDays()) {
-					// Find available days
-					Integer needDays = tmpMergedClass.getClazz2().getClsDayperweek() - tmpMergedClass.getNumberOfAvaDays();
-					// Get all days of class except the match days.
-					List<StudentAvailableTimelocation> sTimeLocations = sTimelocationDao.findByExceptSpecificDays(tmpMergedClass.getAvaDays());
-					if (sTimeLocations.size() >= needDays) {
-						for (Tutor tutor : intersectTutors) {
-							System.out.println("- Tutor ID : "+tutor.getTurId());
-							// Filter by tutor available days
-							RecommendTutor recTutor = filterTutorsByAvailableDay(needDays, tmpMergedClass.getClazz2().getClsDuration(), sTimeLocations, tutor);
-							if (recTutor != null) {
-								tmpRecommendClass2.add(recTutor);
-							}
-						}
-						if (tmpRecommendClass2.isEmpty()) {
-							isCls2Pass = false;
-						}
-					}
-				}
-				// For merged class
-
-				for (Tutor tutor : intersectTutors) {
-					System.out.println("- Tutor ID : "+tutor.getTurId());
-					// Filter by tutor available days
-					RecommendTutor recTutor = filterTutorsByAvailableDayMerged(tmpMergedClass.getMerMindayperweek(), tmpMergedClass.getClazz1().getClsDuration() + tmpMergedClass.getClazz2().getClsDuration(), tmpMergedClass.getMergedClassAvailabletimes(), tutor);
-					if (recTutor != null) {
-						tmpRecommendMerged.add(recTutor);
-					}
-				}
-				if (tmpRecommendMerged.isEmpty()) {
-					isMergedPass = false;
-				}
-				// Intersect
-				if (isCls1Pass && isCls2Pass && isMergedPass) {
-					if (!tmpRecommendClass1.isEmpty()) {
-						tmpRecommendMerged.retainAll(tmpRecommendClass1);
-					}
-					if (!tmpRecommendClass1.isEmpty()) {
-						tmpRecommendMerged.retainAll(tmpRecommendClass2);
-					}
-					tmpMergedClass.setRecommendTutors(tmpRecommendMerged);
-				}
-
-
-			}*/
 			// If cannot find recommend tutor, pass class to normal case.
-			if (tmpMergedClass.getRecommendTutors().isEmpty()) {
-				System.out.println("* Cannot Found Class : "+tmpMergedClass.toString() + " -> Move classes to normal case");
-				cancelledMergedClasses.add(tmpMergedClass);
+			MergedClass retTmpMergedClass = mergedClassService.tutorMatchingForMergedClass(tmpMergedClass);
+			if (retTmpMergedClass.getRecommendTutors().isEmpty()) {
+				System.out.println("* Cannot Found Class : "+retTmpMergedClass.toString() + " -> Move classes to normal case");
+				mergedClasses.remove(tmpMergedClass);
 			} else {
-				/////////////////////// Remove ////////////////////////////
-				classes.remove(tmpMergedClass.getClazz1());
-				classes.remove(tmpMergedClass.getClazz2());
-				System.out.println("* Found Class : "+tmpMergedClass.toString());
-
+				selectedMergedClasses.add(retTmpMergedClass);
+				// remove class
+				classes.remove(retTmpMergedClass.getClazz1());
+				classes.remove(retTmpMergedClass.getClazz2());
+				System.out.println("* Found Class : "+retTmpMergedClass.toString());
+				mergedClasses = findDupList(mergedClasses, tmpMergedClass);
 			}
+
 		}
+		mergedClasses = selectedMergedClasses;
 		// remove merged class if cannot find recommend tutor
-		selectedMergedClasses.removeAll(cancelledMergedClasses);
 		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
-		System.out.println("2.5 Merged Class - Order Tutor by merged class specification");
+		System.out.println("2.4 Merged Class - Order Tutor by merged class specification");
 		TutorMatchingDao tutorMatchingDao = new TutorMatchingDao();
 		List<TutorMatching> tutorMatchings = tutorMatchingDao.list();
-		for (MergedClass tmpMergedClass : selectedMergedClasses) {
+		for (MergedClass tmpMergedClass : mergedClasses) {
 			System.out.println("------------ Class " + tmpMergedClass.toString() + " ------------");
 			for (RecommendTutor recTutor : tmpMergedClass.getRecommendTutors()) {
 				System.out.println("Tutor Name : " + recTutor.getTutor().getTurFirstname());
@@ -246,7 +120,7 @@ public class App {
 						.orElse(null);
 				tmpRecTutor.setRecTutorOrder(matching.getMatOrder());
 				for (RecommendTimelocation timeLoc : tmpRecTutor.getRecommendTimelocations()) {
-					System.out.println("Day : " + timeLoc.getRecdDayId() + " Time : " + timeLoc.getRecdStart() + " - " + timeLoc.getRecdEnd() + " Reserved Time : "+ timeLoc.getRecdStart() + " - " + timeLoc.getRecdTravelEnd());
+					System.out.println("Day : " + timeLoc.getRecdDayId() + " Time : " + timeLoc.getRecdStart() + " - " + timeLoc.getRecdEnd() + " Reserved Time : "+ timeLoc.getRecdTravelStart() + " - " + timeLoc.getRecdTravelEnd());
 				}
 			}
 
@@ -260,12 +134,12 @@ public class App {
 				tmpMergedClass.getRecommendTutors().sort(Comparator.comparing(RecommendTutor::getRecTutorOrder));
 			}
 			for (int i = 0 ; i < tmpMergedClass.getRecommendTutors().size() ; i++) {
-				tmpMergedClass.getRecommendTutors().get(i).setRecOrder(i + 1);
+				tmpMergedClass.getRecommendTutors().get(i).setRecOrder(i + 1L);
 			}
 
 		}
 		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
-		for (MergedClass tmpMergedClass : selectedMergedClasses) {
+		for (MergedClass tmpMergedClass : mergedClasses) {
 			System.out.println("------------ Class " + tmpMergedClass.toString() + " ------------");
 			for (RecommendTutor recTutor : tmpMergedClass.getRecommendTutors()) {
 				System.out.println("Tutor Name : " + recTutor.getTutor().getTurFirstname() + " Student ID : "+recTutor.getMergedClass().getClazz1().getStudent().getStuId()+ ","+recTutor.getMergedClass().getClazz2().getStudent().getStuId());
@@ -278,17 +152,26 @@ public class App {
 		}
 
 		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
-		System.out.println("2.6 Merged Class -  Check time overlap of student");
+		System.out.println("2.5 Merged Class -  Check time overlap of student");
 		// Get the first recommend tutors
 		RecommendTutorService recTutorService = new RecommendTutorService();
-		List<RecommendTutor> mergedTutors = selectedMergedClasses.stream().filter(mergedClass -> !mergedClass.getRecommendTutors().isEmpty()).map(mergedClass -> mergedClass.getRecommendTutors().get(0)).collect(Collectors.toList());
-		Map<Integer,List<RecommendTutor>> groupMergedClassByStudent = groupByStudentMerged(mergedTutors);
-		Map<Integer,List<RecommendTutor>> notOverlapMergedStudent = selectTutor(groupMergedClassByStudent, Constants.FLAG_STUDENT);
+		List<RecommendTutor> mergedTutors = new ArrayList<>();
+		for (MergedClass tmpMergedClass : mergedClasses) {
+			if (!tmpMergedClass.getRecommendTutors().isEmpty()) {
+				mergedTutors.add(tmpMergedClass.getRecommendTutors().get(0));
+			}
+		}
+		//List<RecommendTutor> mergedTutors = mergedClasses.stream().filter(mergedClass -> !mergedClass.getRecommendTutors().isEmpty()).map(mergedClass -> mergedClass.getRecommendTutors().get(0)).collect(Collectors.toList());
+		System.out.println("mergedTutors size : "+mergedTutors.size());
+		Map<Long,List<RecommendTutor>> groupMergedClassByStudent = groupByStudentMerged(mergedTutors);
+		Map<Long,List<RecommendTutor>> notOverlapMergedStudent = selectTutor(groupMergedClassByStudent, new HashMap<>(), Constants.FLAG_STUDENT);
 
+		System.out.println("groupMergedClassByStudent size : "+groupMergedClassByStudent.size());
+		System.out.println("notOverlapMergedStudent size : "+notOverlapMergedStudent.size());
 		System.out.println("\r\n** Class that can match student **");
 		List<Class> matchMergedClass = new ArrayList<>();
 		List<RecommendTutor> recTutors = new ArrayList<>();
-		for (Map.Entry<Integer,List<RecommendTutor>> entry : notOverlapMergedStudent.entrySet())
+		for (Map.Entry<Long,List<RecommendTutor>> entry : notOverlapMergedStudent.entrySet())
 		{
 			recTutors.addAll(entry.getValue());
 			System.out.println("Student ID : "+entry.getKey());
@@ -303,15 +186,15 @@ public class App {
 		List<RecommendTutor> recTutorsConvertFromMergedStuMap = recTutorService.convertMapToRecTutors(notOverlapMergedStudent);
 
 		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
-		System.out.println("2.7 Merged Class -  Check time overlap of tutor");
+		System.out.println("2.6 Merged Class -  Check time overlap of tutor");
 
-		Map<Integer,List<RecommendTutor>> groupMergedClassByTutor = groupByTutor(recTutorsConvertFromMergedStuMap);
-		Map<Integer,List<RecommendTutor>> notOverlapMergedTutor = selectTutor(groupMergedClassByTutor, Constants.FLAG_TUTOR);
+		Map<Long,List<RecommendTutor>> groupMergedClassByTutor = groupByTutor(recTutorsConvertFromMergedStuMap);
+		Map<Long,List<RecommendTutor>> notOverlapMergedTutor = selectTutor(groupMergedClassByTutor, new HashMap<>() ,Constants.FLAG_TUTOR);
 
 		System.out.println("\r\n** Class that can match tutor **");
 		Set<Class> matchClasses = new HashSet<>();
 		List<MergedClass> finalMergedClasses = new ArrayList<>();
-		for (Map.Entry<Integer,List<RecommendTutor>> entry : notOverlapMergedTutor.entrySet())
+		for (Map.Entry<Long,List<RecommendTutor>> entry : notOverlapMergedTutor.entrySet())
 		{
 
 			System.out.println("Tutor ID : "+entry.getKey());
@@ -354,11 +237,11 @@ public class App {
 		System.out.println("3.1.1 Matching Tutor by subject subject group and available time");
 		System.out.println("Class size : "+classes.size());
 		ClassService classService = new ClassService();
-
+		TutorDao tutorDao = new TutorDao();
 		for (Class cls : classes) {
 			List<RecommendTutor> recommendTutors = new ArrayList<>();
 			cls.setRecommendTutors(recommendTutors);
-			Integer subjectID = cls.getSubject().getSubjId();
+			Long subjectID = cls.getSubject().getSubjId();
 			System.out.println("Class ID : " + cls.getClsId() + " Subject : " + cls.getSubject().getSubjName() + " : " + cls.getSubjectGroupDetail().getGrpdName() + " Class days per week : "+cls.getClsDayperweek());
 			// find tutor by subject
 			List<Tutor> tutors = tutorDao.findBySubjectAndProgram(subjectID, cls.getSubjectGroupDetail().getSubjectGroup().getGrpId(), cls.getClsPrgId());
@@ -420,7 +303,7 @@ public class App {
 			}
 
 			for (int i = 0 ; i < cls.getRecommendTutors().size() ; i++) {
-				cls.getRecommendTutors().get(i).setRecOrder(i + 1);
+				cls.getRecommendTutors().get(i).setRecOrder(i + 1L);
 			}
 
 		}
@@ -435,7 +318,7 @@ public class App {
 				System.out.println("Tutor Year Exp : " + recTutor.getRecTutorYearExp());
 				System.out.println("Tutor Min Travel Time : " + recTutor.getMinTravelTime());
 				for (RecommendTimelocation timeLoc : recTutor.getRecommendTimelocations()) {
-					System.out.println("Day : " + timeLoc.getRecdDayId() + " Time : " + timeLoc.getRecdStart() + " - " + timeLoc.getRecdEnd());
+					System.out.println("Day : " + timeLoc.getRecdDayId() + " Time : " + timeLoc.getRecdStart() + " - " + timeLoc.getRecdEnd() + " Ava Time : " + timeLoc.getRecdAvaStart() + " - " + timeLoc.getRecdAvaEnd());
 				}
 				System.out.println("--------------------------------");
 			}
@@ -449,21 +332,23 @@ public class App {
 				recTutors.add(cls.getRecommendTutors().get(0));
 			}
 		}
-		Map<Integer,List<RecommendTutor>> groupClassByTutor = groupByTutor(fistRecTutors);
+		//fistRecTutors.addAll(finalMergedRecTutors);
+		/*
+		Map<Long,List<RecommendTutor>> groupClassByTutor = groupByTutor(fistRecTutors);
 		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
 		System.out.println("3.5 Select the first recommend tutor and check time overlap by tutor");
-		Map<Integer,List<RecommendTutor>> notOverlap = selectTutor(groupClassByTutor, Constants.FLAG_TUTOR);
+		Map<Long,List<RecommendTutor>> notOverlap = selectTutor(groupClassByTutor, Constants.FLAG_TUTOR);
 
 		System.out.println("\r\n** Class that can match tutor **");
-		for (Map.Entry<Integer,List<RecommendTutor>> entry : notOverlap.entrySet())
+		for (Map.Entry<Long,List<RecommendTutor>> entry : notOverlap.entrySet())
 		{
 
 			System.out.println("Tutor ID : "+entry.getKey());
 			for (RecommendTutor rec : entry.getValue()){
-				System.out.println("- Class ID : " + rec.getClazz().getClsId() + " / Student ID : "+rec.getClazz().getStudent().getStuId() + " / Days : "+rec.getClazz().getClsDayperweek() + " / Rec Order : "+rec.getRecOrder() + " / Score : "+rec.getRecTutorOrder());
+				System.out.println("- Class ID : " + rec.getClazz().getClsId() + " / Subject : " + rec.getClazz().getSubject().getSubjName() + " : " + rec.getClazz().getSubjectGroupDetail().getGrpdName()  + " / Student ID : "+rec.getClazz().getStudent().getStuId() + " / Days : "+rec.getClazz().getClsDayperweek() + " / Rec Order : "+rec.getRecOrder() + " / Score : "+rec.getRecTutorOrder());
 				matchClasses.add(rec.getClazz());
 				for(RecommendTimelocation recTime : rec.getRecommendTimelocations()){
-					System.out.println("--- Day : " + recTime.getRecdDayId() + " / Class time : "+recTime.getRecdStart() + " - "+recTime.getRecdEnd()+ " / Reserved time : "+recTime.getRecdTravelStart() + " - "+recTime.getRecdTravelEnd());
+					System.out.println("--- Day : " + recTime.getRecdDayId() + " / Class time : "+recTime.getRecdStart() + " - "+recTime.getRecdEnd()+ " / Reserved time : "+recTime.getRecdTravelStart() + " - "+recTime.getRecdTravelEnd() + " / Location : "+recTime.getRecdLoc());
 				}
 			}
 		}
@@ -472,25 +357,27 @@ public class App {
 		for (Class cls : classes) {
 			System.out.println("- Class ID : " + cls.getClsId());
 		}
+		// Add merged c
 		// Convert map to rec tutor list
 		List<RecommendTutor> recTutorsConvertFromTutorMap = recTutorService.convertMapToRecTutors(notOverlap);
+		//Map<Long,List<RecommendTutor>> groupClassByStudent = groupByStudentMerged(recTutorsConvertFromTutorMap);
 
-		Map<Integer,List<RecommendTutor>> groupClassByStudent = groupByStudent(recTutorsConvertFromTutorMap);
+		Map<Long,List<RecommendTutor>> groupClassByStudent = groupByStudent(recTutorsConvertFromTutorMap);
 		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
 		System.out.println("3.6 Select the first recommend tutor and check time overlap by student");
-		Map<Integer,List<RecommendTutor>> notOverlapStudent = selectTutor(groupClassByStudent, Constants.FLAG_STUDENT);
+		Map<Long,List<RecommendTutor>> notOverlapStudent = selectTutor(groupClassByStudent, Constants.FLAG_STUDENT);
 
 		System.out.println("\r\n** Class that can match tutor **");
 		List<Class> matchClassStudent = new ArrayList<>();
-		for (Map.Entry<Integer,List<RecommendTutor>> entry : notOverlapStudent.entrySet())
+		for (Map.Entry<Long,List<RecommendTutor>> entry : notOverlapStudent.entrySet())
 		{
 
 			System.out.println("Student ID : "+entry.getKey());
 			for (RecommendTutor rec : entry.getValue()){
-				System.out.println("- Class ID : " + rec.getClazz().getClsId() + " / Tutor ID : "+rec.getTutor().getTurId() + " / Days : "+rec.getClazz().getClsDayperweek() + " / Rec Order : "+rec.getRecOrder() + " / Score : "+rec.getRecTutorOrder());
+				System.out.println("- Class ID : " + rec.getClazz().getClsId() + " / Subject : " + rec.getClazz().getSubject().getSubjName() + " : " + rec.getClazz().getSubjectGroupDetail().getGrpdName()  + " / Tutor ID : "+rec.getTutor().getTurId() + " / Days : "+rec.getClazz().getClsDayperweek() + " / Rec Order : "+rec.getRecOrder() + " / Score : "+rec.getRecTutorOrder());
 				matchClassStudent.add(rec.getClazz());
 				for(RecommendTimelocation recTime : rec.getRecommendTimelocations()){
-					System.out.println("--- Day : " + recTime.getRecdDayId() + " / Class time : "+recTime.getRecdStart() + " - "+recTime.getRecdEnd()+ " / Reserved time : "+recTime.getRecdTravelStart() + " - "+recTime.getRecdTravelEnd());
+					System.out.println("--- Day : " + recTime.getRecdDayId() + " / Class time : "+recTime.getRecdStart() + " - "+recTime.getRecdEnd()+ " / Reserved time : "+recTime.getRecdTravelStart() + " - "+recTime.getRecdTravelEnd() + " / Location : "+recTime.getRecdLoc());
 				}
 			}
 		}
@@ -500,24 +387,28 @@ public class App {
 			System.out.println("- Class ID : " + cls.getClsId());
 		}
 
-
+*/
 
 		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
-		System.out.println("4. Check overlap merged class and class");
+		System.out.println("3. Check overlap merged class and class");
 		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
 		// Find Recommend Tutors duplicated time slot for mix classes case (Student)
 		//////////////// REMOVE //////////////////
 	//	mergedRecTutorsStep19 = new ArrayList<>();
 		// Convert map to rec tutors list
-		List<RecommendTutor> recTutorsConvertFromStuMap = recTutorService.convertMapToRecTutors(notOverlapStudent);
+	//	List<RecommendTutor> recTutorsConvertFromStuMap = recTutorService.convertMapToRecTutors(notOverlapStudent);
 
-		System.out.println("Normal : "+recTutorsConvertFromStuMap.size());
-		System.out.println("Merged : "+finalMergedRecTutors.size());
-		Map<Integer,List<RecommendTutor>> groupMergedClassByStudentStep4Map = groupByStudentMerged(finalMergedRecTutors);
-		Map<Integer,List<RecommendTutor>> groupClassByStudentStep4Map = groupByStudent(recTutorsConvertFromStuMap);
-		Map<Integer,List<RecommendTutor>> allByStudentMap = selectTutorForMix(groupMergedClassByStudentStep4Map, groupClassByStudentStep4Map, Constants.FLAG_STUDENT);
+
+		Map<Long,List<RecommendTutor>> groupMergedClassByStudentStep4Map = groupByStudentMerged(finalMergedRecTutors);
+		//Map<Long,List<RecommendTutor>> groupClassByStudentStep4Map = groupByStudent(recTutorsConvertFromStuMap);
+		Map<Long,List<RecommendTutor>> groupClassByStudentStep4Map = groupByStudent(fistRecTutors);
+		//Map<Long,List<RecommendTutor>> allByStudentMap = selectTutorForMix(groupMergedClassByStudentStep4Map, groupClassByStudentStep4Map, Constants.FLAG_STUDENT);
+		System.out.println("Normal : "+groupClassByStudentStep4Map.size());
+		System.out.println("Merged : "+groupMergedClassByStudentStep4Map.size());
+		Map<Long,List<RecommendTutor>> allByStudentMap = selectTutor( groupClassByStudentStep4Map, groupMergedClassByStudentStep4Map, Constants.FLAG_STUDENT);
 		recTutors = new ArrayList<>();
-		for (Map.Entry<Integer,List<RecommendTutor>> entry : allByStudentMap.entrySet())
+		System.out.println("+++ Normal Case +++");
+		for (Map.Entry<Long,List<RecommendTutor>> entry : allByStudentMap.entrySet())
 		{
 			System.out.println("Student ID : "+entry.getKey());
 			for (RecommendTutor rec : entry.getValue()){
@@ -525,10 +416,26 @@ public class App {
 				if (rec.getMergedClass() != null) {
 					System.out.println("- Class ID : " + rec.getMergedClass().toString() + " / Tutor ID : " + rec.getTutor().getTurId() + " / Days : "+rec.getMergedClass().getMerMindayperweek() + " / Rec Order : "+rec.getRecOrder() + " / Score : "+rec.getRecTutorOrder());
 				} else {
-					System.out.println("- Class ID : " + rec.getClazz().getClsId() + " / Tutor ID : " + rec.getTutor().getTurId()  + " / Days : " + rec.getClazz().getClsDayperweek() + " / Rec Order : " + rec.getRecOrder() + " / Score : " + rec.getRecTutorOrder());
+					System.out.println("- Class ID : " + rec.getClazz().getClsId() + " / Subject : " + rec.getClazz().getSubject().getSubjName() + " : " + rec.getClazz().getSubjectGroupDetail().getGrpdName()  + " / Student ID : "+rec.getClazz().getStudent().getStuId() + " / Days : "+rec.getClazz().getClsDayperweek() + " / Rec Order : "+rec.getRecOrder() + " / Score : "+rec.getRecTutorOrder());
 				}
-				for(RecommendTimelocation recTime : rec.getRecommendTimelocations()){
-					System.out.println("--- Day : " + recTime.getRecdDayId() + " / Class time : "+recTime.getRecdStart() + " - "+recTime.getRecdEnd()+ " / Reserved time : "+recTime.getRecdTravelStart() + " - "+recTime.getRecdTravelEnd());
+				for(RecommendTimelocation recTime : rec.getRecommendTimelocations()) {
+					System.out.println("--- Day : " + recTime.getRecdDayId() + " / Class time : " + recTime.getRecdStart() + " - " + recTime.getRecdEnd() + " / Reserved time : " + recTime.getRecdTravelStart() + " - " + recTime.getRecdTravelEnd() + " / Location : " + recTime.getRecdLoc());
+				}
+			}
+		}
+		System.out.println("+++ Merged Case +++");
+		for (Map.Entry<Long,List<RecommendTutor>> entry : groupMergedClassByStudentStep4Map.entrySet())
+		{
+			System.out.println("Student ID : "+entry.getKey());
+			for (RecommendTutor rec : entry.getValue()){
+				recTutors.add(rec);
+				if (rec.getMergedClass() != null) {
+					System.out.println("- Class ID : " + rec.getMergedClass().toString() + " / Tutor ID : " + rec.getTutor().getTurId() + " / Days : "+rec.getMergedClass().getMerMindayperweek() + " / Rec Order : "+rec.getRecOrder() + " / Score : "+rec.getRecTutorOrder());
+				} else {
+					System.out.println("- Class ID : " + rec.getClazz().getClsId() + " / Subject : " + rec.getClazz().getSubject().getSubjName() + " : " + rec.getClazz().getSubjectGroupDetail().getGrpdName()  + " / Student ID : "+rec.getClazz().getStudent().getStuId() + " / Days : "+rec.getClazz().getClsDayperweek() + " / Rec Order : "+rec.getRecOrder() + " / Score : "+rec.getRecTutorOrder());
+				}
+				for(RecommendTimelocation recTime : rec.getRecommendTimelocations()) {
+					System.out.println("--- Day : " + recTime.getRecdDayId() + " / Class time : " + recTime.getRecdStart() + " - " + recTime.getRecdEnd() + " / Reserved time : " + recTime.getRecdTravelStart() + " - " + recTime.getRecdTravelEnd() + " / Location : " + recTime.getRecdLoc());
 				}
 			}
 		}
@@ -539,30 +446,129 @@ public class App {
 
 		MixClass recTutorsMixClass = splitMergedAndNormalClass(recTutorsConvertFromMixStuMap);
 		List<RecommendTutor> rectutorsNormal = recTutorsMixClass.getRecTutorsNormal();
-		List<RecommendTutor> rectutorsMerged = recTutorsMixClass.getRecTutorsMerged();
-		System.out.println("Normal : "+rectutorsNormal.size());
-		System.out.println("Merged : "+rectutorsMerged.size());
-		Map<Integer,List<RecommendTutor>> groupMergedClassByTutorStep4Map = groupByTutor(rectutorsMerged);
-		Map<Integer,List<RecommendTutor>> groupClassByTutorStep4Map = groupByTutor(rectutorsNormal);
-		Map<Integer,List<RecommendTutor>> allByTutorMap = selectTutorForMix(groupMergedClassByTutorStep4Map, groupClassByTutorStep4Map, Constants.FLAG_TUTOR);
-		for (Map.Entry<Integer,List<RecommendTutor>> entry : allByTutorMap.entrySet())
-		{
 
+		Map<Long,List<RecommendTutor>> groupMergedClassByTutorStep4Map = groupByTutor(finalMergedRecTutors);
+		Map<Long,List<RecommendTutor>> groupClassByTutorStep4Map = groupByTutor(rectutorsNormal);
+		System.out.println("Normal : "+groupClassByTutorStep4Map.size());
+		System.out.println("Merged : "+groupMergedClassByTutorStep4Map.size());
+		//Map<Long,List<RecommendTutor>> allByTutorMap = selectTutorForMix(groupMergedClassByTutorStep4Map, groupClassByTutorStep4Map, Constants.FLAG_TUTOR);
+		Map<Long,List<RecommendTutor>> allByTutorMap = selectTutor(groupClassByTutorStep4Map, groupMergedClassByTutorStep4Map, Constants.FLAG_TUTOR);
+		System.out.println("+++ Normal Case +++");
+		for (Map.Entry<Long,List<RecommendTutor>> entry : allByTutorMap.entrySet())
+		{
 			System.out.println("Tutor ID : "+entry.getKey());
-			for (RecommendTutor rec : entry.getValue()){
+			for (RecommendTutor rec : entry.getValue()) {
 				if (rec.getMergedClass() != null) {
-					System.out.println("- Class ID : " + rec.getMergedClass().toString() + " / Student ID : " + rec.getMergedClass().getClazz1().getStudent().getStuId() +","+rec.getMergedClass().getClazz2().getStudent().getStuId()+ " / Days : "+rec.getMergedClass().getMerMindayperweek() + " / Rec Order : "+rec.getRecOrder() + " / Score : "+rec.getRecTutorOrder());
+					System.out.println("- Class ID : " + rec.getMergedClass().toString() + " / Student ID : " + rec.getMergedClass().getClazz1().getStudent().getStuId() + "," + rec.getMergedClass().getClazz2().getStudent().getStuId() + " / Days : " + rec.getMergedClass().getMerMindayperweek() + " / Rec Order : " + rec.getRecOrder() + " / Score : " + rec.getRecTutorOrder());
 				} else {
-					System.out.println("- Class ID : " + rec.getClazz().getClsId() + " / Student ID : " + rec.getClazz().getStudent().getStuId() + " / Days : " + rec.getClazz().getClsDayperweek() + " / Rec Order : " + rec.getRecOrder() + " / Score : " + rec.getRecTutorOrder());
+					System.out.println("- Class ID : " + rec.getClazz().getClsId() + " / Subject : " + rec.getClazz().getSubject().getSubjName() + " : " + rec.getClazz().getSubjectGroupDetail().getGrpdName()  + " / Student ID : "+rec.getClazz().getStudent().getStuId() + " / Days : "+rec.getClazz().getClsDayperweek() + " / Rec Order : "+rec.getRecOrder() + " / Score : "+rec.getRecTutorOrder());
 				}
-				for(RecommendTimelocation recTime : rec.getRecommendTimelocations()){
-					System.out.println("--- Day : " + recTime.getRecdDayId() + " / Class time : "+recTime.getRecdStart() + " - "+recTime.getRecdEnd()+ " / Reserved time : "+recTime.getRecdTravelStart() + " - "+recTime.getRecdTravelEnd());
+				for (RecommendTimelocation recTime : rec.getRecommendTimelocations()) {
+					System.out.println("--- Day : " + recTime.getRecdDayId() + " / Class time : "+recTime.getRecdStart() + " - "+recTime.getRecdEnd()+ " / Reserved time : "+recTime.getRecdTravelStart() + " - "+recTime.getRecdTravelEnd() + " / Location : "+recTime.getRecdLoc());
 				}
 			}
 		}
+		System.out.println("+++ Merged Case +++");
+		for (Map.Entry<Long,List<RecommendTutor>> entry : groupMergedClassByTutorStep4Map.entrySet())
+		{
+			System.out.println("Tutor ID : "+entry.getKey());
+			for (RecommendTutor rec : entry.getValue()) {
+				if (rec.getMergedClass() != null) {
+					System.out.println("- Class ID : " + rec.getMergedClass().toString() + " / Student ID : " + rec.getMergedClass().getClazz1().getStudent().getStuId() + "," + rec.getMergedClass().getClazz2().getStudent().getStuId() + " / Days : " + rec.getMergedClass().getMerMindayperweek() + " / Rec Order : " + rec.getRecOrder() + " / Score : " + rec.getRecTutorOrder());
+				} else {
+					System.out.println("- Class ID : " + rec.getClazz().getClsId() + " / Subject : " + rec.getClazz().getSubject().getSubjName() + " : " + rec.getClazz().getSubjectGroupDetail().getGrpdName()  + " / Student ID : "+rec.getClazz().getStudent().getStuId() + " / Days : "+rec.getClazz().getClsDayperweek() + " / Rec Order : "+rec.getRecOrder() + " / Score : "+rec.getRecTutorOrder());
+				}
+				for (RecommendTimelocation recTime : rec.getRecommendTimelocations()) {
+					System.out.println("--- Day : " + recTime.getRecdDayId() + " / Class time : "+recTime.getRecdStart() + " - "+recTime.getRecdEnd()+ " / Reserved time : "+recTime.getRecdTravelStart() + " - "+recTime.getRecdTravelEnd() + " / Location : "+recTime.getRecdLoc());
+				}
+			}
+		}
+
 		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
+		System.out.println("4. Group by tutor");
+		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
+		List<Class> matchClass = new ArrayList<>();
+		for (Map.Entry<Long,List<RecommendTutor>> entry : groupMergedClassByTutorStep4Map.entrySet())
+		{
+			if (allByTutorMap.containsKey(entry.getKey())) {
+				List<RecommendTutor> existing = allByTutorMap.get(entry.getKey());
+				existing.addAll(entry.getValue());
+				allByTutorMap.replace(entry.getKey(), existing);
+			} else {
+				allByTutorMap.put(entry.getKey(),entry.getValue());
+			}
+		}
+		Map<Long,List<RecommendTutor>> result = allByTutorMap.entrySet().stream()
+				.sorted(Map.Entry.comparingByKey())
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+						(oldValue, newValue) -> oldValue, LinkedHashMap::new));
+		for (Map.Entry<Long,List<RecommendTutor>> entry : result.entrySet())
+		{
+			Map<Long, Long> dupDays = findNumberOfDuplicatedByDay(entry.getValue());
+			for (RecommendTutor rec : entry.getValue()) {
+				Double ratio = Double.valueOf(rec.getRecommendTimelocations().size()) / Double.valueOf(rec.getNumOfDays());
+				rec.setAvailableRatio(ratio);
+			}
+			List<RecommendTutor> newRecTutors = new ArrayList<>(entry.getValue());
+			List<RecommendTutor> recTutorRatioMoreThan1 = newRecTutors.stream()
+					.filter(it -> it.getAvailableRatio() > 1).collect(Collectors.toList());
+			newRecTutors.removeAll(recTutorRatioMoreThan1);
+			recTutorRatioMoreThan1.sort(Comparator.comparing(RecommendTutor::getAvailableRatio)
+					.thenComparing(Comparator.comparing(RecommendTutor::getAvailableDays)).reversed());
+			Map<Long, Long> usedDays = new HashMap<>();
+			for (RecommendTutor rec : recTutorRatioMoreThan1) {
+				int i = 0;
+				for (RecommendTimelocation recTimeLoc : rec.getRecommendTimelocations()) {
+					Long dupDay = dupDays.get(recTimeLoc.getRecdDayId());
+					recTimeLoc.setNumOfDup(dupDay);
+				}
+				rec.getRecommendTimelocations().sort(Comparator.comparing(RecommendTimelocation::getNumOfDup));
+				List<RecommendTimelocation> newRecTimeLocs = new ArrayList<>();
+				while (i < rec.getRecommendTimelocations().size()) {
+					if (newRecTimeLocs.size() == rec.getNumOfDays()) {
+						break;
+					} else {
+						if (!usedDays.containsKey(rec.getRecommendTimelocations().get(i).getRecdDayId())) {
+							newRecTimeLocs.add(rec.getRecommendTimelocations().get(i));
+							usedDays.put(rec.getRecommendTimelocations().get(i).getRecdDayId(), 1L);
+						}
+					}
+					i++;
+				}
+				rec.setRecommendTimelocations(newRecTimeLocs);
+			}
+			newRecTutors.addAll(recTutorRatioMoreThan1);
+			System.out.println("Tutor ID : "+entry.getKey());
+			for (RecommendTutor rec : entry.getValue()) {
+				if (rec.getMergedClass() != null) {
+					matchClass.add(rec.getMergedClass().getClazz1());
+					matchClass.add(rec.getMergedClass().getClazz2());
+					System.out.println("- Class ID : " + rec.getMergedClass().toString() + " / Student ID : " + rec.getMergedClass().getClazz1().getStudent().getStuId() + "," + rec.getMergedClass().getClazz2().getStudent().getStuId() + " / Days : " + rec.getMergedClass().getMerMindayperweek() + " / Rec Order : " + rec.getRecOrder() + " / Score : " + rec.getRecTutorOrder());
+				} else {
+					matchClass.add(rec.getClazz());
+					System.out.println("- Class ID : " + rec.getClazz().getClsId() + " / Subject : " + rec.getClazz().getSubject().getSubjName() + " : " + rec.getClazz().getSubjectGroupDetail().getGrpdName()  + " / Student ID : "+rec.getClazz().getStudent().getStuId() + " / Days : "+rec.getClazz().getClsDayperweek() + " / Rec Order : "+rec.getRecOrder() + " / Score : "+rec.getRecTutorOrder());
+				}
+				for (RecommendTimelocation recTime : rec.getRecommendTimelocations()) {
+					System.out.println("--- Day : " + recTime.getRecdDayId() + " / Class time : "+recTime.getRecdStart() + " - "+recTime.getRecdEnd()+ " / Reserved time : "+recTime.getRecdTravelStart() + " - "+recTime.getRecdTravelEnd() + " / Location : "+recTime.getRecdLoc());
+				}
+			}
+		}
+
+		System.out.println("\r\n** Class that not match any tutors **");
+		classes.removeAll(matchClass);
+		for (Class cls : classes) {
+			System.out.println("- Class ID : " + cls.getClsId());
+		}
+		System.out.println("++++++++++++++++++++++++++++++++++++++++++");
+
+
 		// Create recommend tutors
+		/*
+		RecommendStatusDao recommendStatusDao = new RecommendStatusDao();
+		RecommendStatus statusOpen = recommendStatusDao.findByStatusId(Constants.RECSTATUS_WAIT);
+		System.out.println("Status :"+statusOpen.getRecStatusName());
 		List<RecommendTutor> finalRecTutors = recTutorService.convertMapToRecTutors(allByTutorMap);
+		finalRecTutors = assignStatus(finalRecTutors, statusOpen);
 		MixClass finalMixClass = splitMergedAndNormalClass(finalRecTutors);
 		List<RecommendTutor> finalRecTutorsMergedClass = finalMixClass.getRecTutorsMerged();
 		List<RecommendTutor> finalRecTutorsClass = finalMixClass.getRecTutorsNormal();
@@ -572,15 +578,24 @@ public class App {
 		MergedClassDao mergedClassDao = new MergedClassDao();
 		mergedClassDao.createList(finalMeredClasses);
 
-
+*/
 		System.exit(0);
 	}
+
+	public static List<RecommendTutor> assignStatus(List<RecommendTutor> recTutors, RecommendStatus recStatus){
+		for (RecommendTutor recTutor : recTutors) {
+			recTutor.setRecommendStatus(recStatus);
+		}
+		return recTutors;
+	}
+
 	public static MixClass splitMergedAndNormalClass(List<RecommendTutor> recTutors){
 
 		List<RecommendTutor> recTutorsNormal = new ArrayList<>();
 		List<RecommendTutor> recTutorsMerged = new ArrayList<>();
 
 		for (RecommendTutor rectutor : recTutors) {
+			//System.out.println("Status :"+rectutor.getRecommendStatus().getRecStatusName());
 			if (rectutor.getMergedClass() != null) {
 				recTutorsMerged.add(rectutor);
 			} else {
@@ -619,10 +634,11 @@ public class App {
 		}
 		return problemRecTutor;
 	}
-	public static Map<Integer,List<RecommendTutor>> selectTutorForMix(Map<Integer,List<RecommendTutor>> groupMergedClassByStudentStep4Map, Map<Integer,List<RecommendTutor>> groupClassByStudentStep4Map, String flag){
+	/*
+	public static Map<Long,List<RecommendTutor>> selectTutorForMix(Map<Long,List<RecommendTutor>> groupMergedClassByStudentStep4Map, Map<Long,List<RecommendTutor>> groupClassByStudentStep4Map, String flag){
 		System.out.println("Flag : "+flag);
-		Map<Integer,List<RecommendTutor>> newGroupClassByStudentStep4Map = new HashMap<Integer, List<RecommendTutor>>(groupClassByStudentStep4Map);
-		for (Map.Entry<Integer,List<RecommendTutor>> entry : groupMergedClassByStudentStep4Map.entrySet()) {
+		Map<Long,List<RecommendTutor>> newGroupClassByStudentStep4Map = new HashMap<Long, List<RecommendTutor>>(groupClassByStudentStep4Map);
+		for (Map.Entry<Long,List<RecommendTutor>> entry : groupMergedClassByStudentStep4Map.entrySet()) {
 			System.out.println("Key : "+entry.getKey());
 			List<RecommendTutor> recTutorsStep4 = groupClassByStudentStep4Map.get(entry.getKey());
 			if (recTutorsStep4 != null) {
@@ -644,7 +660,7 @@ public class App {
 							newRecTutors.add(firstOption.getNextRecommendTutor());
 						}
 						for (RecommendTutor recTutor : newRecTutors) {
-							Integer id = null;
+							Long id = null;
 							if (flag.equals(Constants.FLAG_TUTOR)) {
 								id = recTutor.getTutor().getTurId();
 								if (newGroupClassByStudentStep4Map.containsKey(id)) {
@@ -656,8 +672,8 @@ public class App {
 								}
 							} else {
 								if (recTutor.getMergedClass() != null) {
-									int id1 = recTutor.getMergedClass().getClazz1().getStudent().getStuId();
-									int id2 = recTutor.getMergedClass().getClazz2().getStudent().getStuId();
+									long id1 = recTutor.getMergedClass().getClazz1().getStudent().getStuId();
+									long id2 = recTutor.getMergedClass().getClazz2().getStudent().getStuId();
 									if (id1 == id2) {
 										if (newGroupClassByStudentStep4Map.containsKey(id1)) {
 											newGroupClassByStudentStep4Map.get(id1).add(recTutor);
@@ -702,12 +718,12 @@ public class App {
 			}
 		}
 
-		Map<Integer, List<RecommendTutor>> allRecTutorsMap = new HashMap<>();
-		for (Map.Entry<Integer, List<RecommendTutor>> entry : groupMergedClassByStudentStep4Map.entrySet()) {
+		Map<Long, List<RecommendTutor>> allRecTutorsMap = new HashMap<>();
+		for (Map.Entry<Long, List<RecommendTutor>> entry : groupMergedClassByStudentStep4Map.entrySet()) {
 			allRecTutorsMap.put(entry.getKey(), entry.getValue());
 
 		}
-		for (Map.Entry<Integer, List<RecommendTutor>> entry : newGroupClassByStudentStep4Map.entrySet()) {
+		for (Map.Entry<Long, List<RecommendTutor>> entry : newGroupClassByStudentStep4Map.entrySet()) {
 			if (allRecTutorsMap.containsKey(entry.getKey())) {
 				allRecTutorsMap.get(entry.getKey()).addAll(entry.getValue());
 			} else {
@@ -722,9 +738,19 @@ public class App {
 		List<RecommendTutor> tmpRecTutors = new ArrayList<>(recommendTutors);
 		List<RecommendTutor> tmpMergedRecTutors = new ArrayList<>(mergedRecommendTutors);
 		// Find duplicated days per tutors or student
-		Map<Integer, Integer> numOfClsDup = findNumberOfDuplicatedByDay(recommendTutors);
-		Map<Integer, Integer> numOfMergedClsDup = findNumberOfDuplicatedByDay(mergedRecommendTutors);
+		Map<Long, Long> numOfClsDup = findNumberOfDuplicatedByDay(recommendTutors);
+		Map<Long, Long> numOfMergedClsDup = findNumberOfDuplicatedByDay(mergedRecommendTutors);
 		List<RecommendTimelocation> tmpRecTimeLocs =  setScheduleForMixClass(new ArrayList<>(), tmpRecTutors, tmpMergedRecTutors, numOfClsDup, numOfMergedClsDup);
+		RecommendTutorService recommendTutorService = new RecommendTutorService();
+		Map<Long, Long> classPerDays = new HashMap<>();
+		classPerDays.put(1L, 0L);
+		classPerDays.put(2L, 0L);
+		classPerDays.put(3L, 0L);
+		classPerDays.put(4L, 0L);
+		classPerDays.put(5L, 0L);
+		classPerDays.put(6L, 0L);
+		classPerDays.put(7L, 0L);
+	//	List<RecommendTimelocation> tmpRecTimeLocs = recommendTutorService.setSchedule(new ArrayList<>(),new ArrayList<>(), checkingRecTutors, numOfClsDup,classPerDays);
 		for (RecommendTimelocation recTime : tmpRecTimeLocs) {
 			System.out.println("--- Day : " + recTime.getRecdDayId() + " / Class time : "+recTime.getRecdStart() + " - "+recTime.getRecdEnd()+ " / Reserved time : "+recTime.getRecdTravelStart() + " - "+recTime.getRecdTravelEnd());
 		}
@@ -748,7 +774,7 @@ public class App {
 		System.out.println("Can pass recommendTutors size : "+newRecommends.size());
 		return newRecommends;
 	}
-	public static List<RecommendTimelocation> setScheduleForMixClass(List<RecommendTimelocation> recTimeLocs, List<RecommendTutor> recommendTutors, List<RecommendTutor> mergedRecommendTutors, Map<Integer, Integer> numOfClsDup, Map<Integer, Integer> numOfMergedClsDup){
+	public static List<RecommendTimelocation> setScheduleForMixClass(List<RecommendTimelocation> recTimeLocs, List<RecommendTutor> recommendTutors, List<RecommendTutor> mergedRecommendTutors, Map<Long, Long> numOfClsDup, Map<Long, Long> numOfMergedClsDup){
 		// Start
 		System.out.println("recommendTutors size : "+recommendTutors.size());
 		if (!recommendTutors.isEmpty()) {
@@ -786,7 +812,7 @@ public class App {
 			}else{
 				// temp not overlap
 				System.out.println("Ratio > 1");
-				Map<Integer, Integer> numOfCurClsDup = new HashMap<>();
+				Map<Long, Long> numOfCurClsDup = new HashMap<>();
 				List<RecommendTimelocation> tmpNotOverlap = new ArrayList<>();
 				// Get order for the specific class
 				for (RecommendTimelocation recTimeLoc : recTutor.getRecommendTimelocations()) {
@@ -796,31 +822,31 @@ public class App {
 							.filter(it -> recTimeLoc.getRecdDayId() == it.getRecdDayId()).collect(Collectors.toList());
 					if (sameDayAndTime.isEmpty()) {
 						tmpNotOverlap.add(recTimeLoc);
-						Integer dayCount = numOfClsDup.get(recTimeLoc.getRecdDayId());
+						Long dayCount = numOfClsDup.get(recTimeLoc.getRecdDayId());
 						numOfCurClsDup.put(recTimeLoc.getRecdDayId(), dayCount);
 					}
 				}
 
-				Map<Integer, Integer> sortedNumOfCurClsDup = numOfCurClsDup.entrySet().stream()
+				Map<Long, Long> sortedNumOfCurClsDup = numOfCurClsDup.entrySet().stream()
 						.sorted(Map.Entry.comparingByValue())
 						.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
 								(oldValue, newValue) -> oldValue, LinkedHashMap::new));
-				Set<Integer> sortedDaysCurClsDup = sortedNumOfCurClsDup.keySet();
+				Set<Long> sortedDaysCurClsDup = sortedNumOfCurClsDup.keySet();
 
 				// Remove days which dup with merged class and append into list.
-				Set<Integer> daysMergedClsDup = numOfMergedClsDup.keySet();
-				Set<Integer> intersectDays = new HashSet<>(sortedDaysCurClsDup);
+				Set<Long> daysMergedClsDup = numOfMergedClsDup.keySet();
+				Set<Long> intersectDays = new HashSet<>(sortedDaysCurClsDup);
 				System.out.println("daysMergedClsDup "+daysMergedClsDup);
 				System.out.println("sortedDaysCurClsDup "+intersectDays);
 				intersectDays.retainAll(daysMergedClsDup);
 				System.out.println("intersectDays "+intersectDays);
 				sortedDaysCurClsDup.removeAll(daysMergedClsDup);
-				Set<Integer> sortedDaysCurClsDupWoIntersect = new HashSet<>(sortedDaysCurClsDup);
+				Set<Long> sortedDaysCurClsDupWoIntersect = new HashSet<>(sortedDaysCurClsDup);
 				sortedDaysCurClsDupWoIntersect.addAll(intersectDays);
 
 
 				// Selected day to set schedule
-				int daysPerWeek = 0;
+				long daysPerWeek = 0;
 				if (recTutor.getMergedClass() != null) {
 					daysPerWeek = recTutor.getMergedClass().getMerMindayperweek();
 				} else {
@@ -828,7 +854,7 @@ public class App {
 				}
 				System.out.println("daysPerWeek : "+daysPerWeek);
 				int i = 0;
-				for (Integer sortedDay : sortedDaysCurClsDupWoIntersect) {
+				for (Long sortedDay : sortedDaysCurClsDupWoIntersect) {
 					System.out.println("i : "+i);
 					if (i < daysPerWeek) {
 						List<RecommendTimelocation> sameDayAndTime = recTutor.getRecommendTimelocations()
@@ -859,7 +885,7 @@ public class App {
 			for (RecommendTutor tmpRectutor : remainRecTutors) {
 
 				// Find same days
-				Integer daysCount = 0;
+				long daysCount = 0;
 				for (RecommendTimelocation recTimeLoc : tmpRectutor.getRecommendTimelocations()) {
 					List<RecommendTimelocation> sameDayAndTime = recTimeLocs
 							.stream()
@@ -871,9 +897,9 @@ public class App {
 				//System.out.println("Merged Class : "+tmpRectutor.getMergedClass().toString()+ " Day count : "+daysCount + " Days : "+recTutor.getMergedClass().getMerMindayperweek());
 				Double ratio = 0D;
 				if (tmpRectutor.getMergedClass() != null) {
-					ratio = daysCount.doubleValue() / tmpRectutor.getMergedClass().getMerMindayperweek();
+					ratio = Double.valueOf(daysCount) / tmpRectutor.getMergedClass().getMerMindayperweek();
 				} else {
-					ratio = daysCount.doubleValue() / tmpRectutor.getClazz().getClsDayperweek().doubleValue();
+					ratio = Double.valueOf(daysCount) / tmpRectutor.getClazz().getClsDayperweek().doubleValue();
 				}
 				if (ratio < 1D) {
 					problemsRecTutors.add(tmpRectutor);
@@ -903,7 +929,7 @@ public class App {
 						.stream()
 						.filter(it -> it.getRecdDayId() == recTimeLoc.getRecdDayId()).collect(Collectors.toList());
 				if (sameDayAndTime.isEmpty()) {
-					System.out.println("Day : " + recTimeLoc.getRecdDayId() + " Time : " + recTimeLoc.getRecdStart() + " - " + recTimeLoc.getRecdEnd() + " Reserved Time : "+ recTimeLoc.getRecdStart() + " - " + recTimeLoc.getRecdTravelEnd());
+					System.out.println("Day : " + recTimeLoc.getRecdDayId() + " Time : " + recTimeLoc.getRecdStart() + " - " + recTimeLoc.getRecdEnd() + " Reserved Time : "+ recTimeLoc.getRecdTravelStart() + " - " + recTimeLoc.getRecdTravelEnd());
 
 					recTimeLocs.add(recTimeLoc);
 				}
@@ -912,41 +938,22 @@ public class App {
 		System.out.println("LOOP EXIT recTimeLocs size : "+recTimeLocs.size());
 		return recTimeLocs;
 	}
-	public static boolean isDupTimeByStudentMerged(List<RecommendTutor> recTutors){
-		Map<Integer,List<RecommendTutor>> studentMap =  groupByStudentMerged(recTutors);
-		List<RecommendTutor> recTutorByStudent = null;
-		for (Map.Entry<Integer,List<RecommendTutor>> entry : studentMap.entrySet()) {
-			recTutorByStudent = isOverlapTime(entry.getValue());
-			if (entry.getValue().size() != recTutorByStudent.size()) {
-				return false;
-			}
-		}
-		return true;
-	}
-	public static boolean isDupTimeByStudent(List<RecommendTutor> recTutors){
-		Map<Integer,List<RecommendTutor>> studentMap =  groupByStudent(recTutors);
-		List<RecommendTutor> recTutorByStudent = null;
-		for (Map.Entry<Integer,List<RecommendTutor>> entry : studentMap.entrySet()) {
-			recTutorByStudent = isOverlapTime(entry.getValue());
-			if (entry.getValue().size() != recTutorByStudent.size()) {
-				return false;
-			}
-		}
-		return true;
-	}
-	public static boolean isDupTimeByTutor(List<RecommendTutor> recTutors){
-		Map<Integer,List<RecommendTutor>> tutorMap =  groupByTutor(recTutors);
-		List<RecommendTutor> recTutorByTutor = null;
-		for (Map.Entry<Integer,List<RecommendTutor>> entry : tutorMap.entrySet()) {
-			recTutorByTutor = isOverlapTime(entry.getValue());
-			if (entry.getValue().size() != recTutorByTutor.size()) {
-				return false;
-			}
-		}
-		return true;
-	}
-	public static List<MergedClass> findDupList(List<MergedClass> selectedMergedClass, MergedClass mergedClass){
 
+*/
+
+	public static List<MergedClass> findDupList(List<MergedClass> selectedMergedClass, MergedClass mergedClass){
+		List<MergedClass> dupMergedClass = new ArrayList<>();
+		for (MergedClass selectedClass : selectedMergedClass) {
+			if (mergedClass.getClazz1().equals(selectedClass.getClazz1()) ||
+					mergedClass.getClazz1().equals(selectedClass.getClazz2()) ||
+					mergedClass.getClazz2().equals(selectedClass.getClazz1()) ||
+					mergedClass.getClazz2().equals(selectedClass.getClazz2())) {
+				dupMergedClass.add(selectedClass);
+			}
+		}
+		System.out.println("selectedMergedClass size : "+selectedMergedClass.size());
+		System.out.println("Duplicate size : "+dupMergedClass.size());
+/*
 		boolean isDup = false;
 		for (MergedClass selectedClass : selectedMergedClass) {
 			if (mergedClass.getClazz1().equals(selectedClass.getClazz1()) ||
@@ -961,15 +968,16 @@ public class App {
 			newMer.add(mergedClass);
 			return newMer;
 		}
-
+*/
+		selectedMergedClass.removeAll(dupMergedClass);
 		return selectedMergedClass;
 	}
-	public static Map<Integer,List<RecommendTutor>> groupByStudentMerged(List<RecommendTutor> recTutors){
-		Map<Integer,List<RecommendTutor>> recommendByStudents = new HashMap<>();
+	public static Map<Long,List<RecommendTutor>> groupByStudentMerged(List<RecommendTutor> recTutors){
+		Map<Long,List<RecommendTutor>> recommendByStudents = new HashMap<>();
 
 		for (RecommendTutor recTutor : recTutors) {
-			int studentId1 = recTutor.getMergedClass().getClazz1().getStudent().getStuId();
-			int studentId2 = recTutor.getMergedClass().getClazz2().getStudent().getStuId();
+			long studentId1 = recTutor.getMergedClass().getClazz1().getStudent().getStuId();
+			long studentId2 = recTutor.getMergedClass().getClazz2().getStudent().getStuId();
 			if (studentId1 == studentId2) {
 				if (recommendByStudents.containsKey(studentId1)) {
 					((List<RecommendTutor>) recommendByStudents.get(studentId1)).add(recTutor);
@@ -1001,11 +1009,11 @@ public class App {
 		return recommendByStudents;
 
 	}
-	public static Map<Integer,List<RecommendTutor>> groupByStudent(List<RecommendTutor> recTutors){
-		Map<Integer,List<RecommendTutor>> recommendByStudents = new HashMap<>();
+	public static Map<Long,List<RecommendTutor>> groupByStudent(List<RecommendTutor> recTutors){
+		Map<Long,List<RecommendTutor>> recommendByStudents = new HashMap<>();
 
 		for (RecommendTutor recTutor : recTutors) {
-			int studentId = recTutor.getClazz().getStudent().getStuId();
+			long studentId = recTutor.getClazz().getStudent().getStuId();
 			if (recommendByStudents.containsKey(studentId)) {
 				((List<RecommendTutor>) recommendByStudents.get(studentId)).add(recTutor);
 			}else{
@@ -1017,11 +1025,11 @@ public class App {
 		return recommendByStudents;
 
 	}
-	public static Map<Integer,List<RecommendTutor>> groupByTutor(List<RecommendTutor> recTutors){
-		Map<Integer,List<RecommendTutor>> selectedTutor = new HashMap<>();
+	public static Map<Long,List<RecommendTutor>> groupByTutor(List<RecommendTutor> recTutors){
+		Map<Long,List<RecommendTutor>> selectedTutor = new HashMap<>();
 
 		for (RecommendTutor recTutor : recTutors) {
-			Integer tutorId = recTutor.getTutor().getTurId();
+			Long tutorId = recTutor.getTutor().getTurId();
 			if (selectedTutor.containsKey(tutorId)) {
 				((List<RecommendTutor>) selectedTutor.get(tutorId)).add(recTutor);
 			}else{
@@ -1033,42 +1041,43 @@ public class App {
 		return selectedTutor;
 
 	}
-	public static Map<Integer, Integer> findNumberOfDuplicatedByDay(List<RecommendTutor> recommendTutors){
-		Map<Integer, Integer> numberOfDuplcated = new HashMap<>();
+	public static Map<Long, Long> findNumberOfDuplicatedByDay(List<RecommendTutor> recommendTutors){
+		Map<Long, Long> numberOfDuplcated = new HashMap<>();
 		for (RecommendTutor recTutor : recommendTutors){
 			for (RecommendTimelocation recTimeLocs : recTutor.getRecommendTimelocations()) {
 				if (numberOfDuplcated.containsKey(recTimeLocs.getRecdDayId())) {
-					Integer num = numberOfDuplcated.get(recTimeLocs.getRecdDayId());
+					long num = numberOfDuplcated.get(recTimeLocs.getRecdDayId());
 					numberOfDuplcated.put(recTimeLocs.getRecdDayId(),num+1);
 				} else {
-					numberOfDuplcated.put(recTimeLocs.getRecdDayId(),1);
+					numberOfDuplcated.put(recTimeLocs.getRecdDayId(),1L);
 				}
 
 			}
 		}
 		return numberOfDuplcated;
 	}
-	public static Map<Integer,List<RecommendTutor>> selectTutor(Map<Integer,List<RecommendTutor>> selectedTutor, String flag){
+	public static Map<Long,List<RecommendTutor>> selectTutor(Map<Long,List<RecommendTutor>> selectedTutor,Map<Long,List<RecommendTutor>> groupMergedClassMap, String flag){
 
-		int classCnt = 0;
-		Map<Integer,List<RecommendTutor>> newMap = null;
-		for (Map.Entry<Integer,List<RecommendTutor>> entry : selectedTutor.entrySet())
+		Map<Long,List<RecommendTutor>> newMap = null;
+		for (Map.Entry<Long,List<RecommendTutor>> entry : selectedTutor.entrySet())
 		{
 			List<RecommendTutor> recommendTutors = entry.getValue();
+			List<RecommendTutor> mergedRecommendTutors = (groupMergedClassMap.get(entry.getKey()) == null) ? new ArrayList<>() : groupMergedClassMap.get(entry.getKey());
+
 			//		System.out.println("Tutor ID : " +entry.getKey() + " / Size : " + entry.getValue().size());
 			if (recommendTutors.size() > 1) {
 				// All recommend tutors per tutor
 				List<RecommendTutor> tmpRecommendTutors = new ArrayList<>(recommendTutors);
 				System.out.println("Find Overlap ");
-				recommendTutors = isOverlapTime(recommendTutors);
+				recommendTutors = isOverlapTime(recommendTutors, mergedRecommendTutors);
 				System.out.println("recommendTutors "+recommendTutors.size() + " tmpRecommendTutors "+tmpRecommendTutors.size());
 				// Means that have problem with this tutors
 				if (tmpRecommendTutors.size() != recommendTutors.size()) {
 					List<RecommendTutor> problemRecTutors = new ArrayList<>(tmpRecommendTutors);
 					problemRecTutors.removeAll(recommendTutors);
 
-					List<RecommendTutorOption> options = createOption(problemRecTutors, flag);
-					newMap = new HashMap<Integer, List<RecommendTutor>>(selectedTutor);
+					List<RecommendTutorOption> options = createOption(problemRecTutors, mergedRecommendTutors, flag);
+					newMap = new HashMap<Long, List<RecommendTutor>>(selectedTutor);
 					newMap.remove(entry.getKey());
 					newMap.put(entry.getKey(), recommendTutors);
 					// Update new map
@@ -1079,60 +1088,8 @@ public class App {
 						if (firstOption.getNextRecommendTutor() != null) {
 							newRecTutors.add(firstOption.getNextRecommendTutor());
 						}
-						for (RecommendTutor recTutor : newRecTutors) {
-							System.out.println("Class "+recTutor.getClazz()+" Rec Tutor : "+recTutor.getTutor().getTurId());
-							Integer id = null;
-							if (flag.equals(Constants.FLAG_TUTOR)) {
-								id = recTutor.getTutor().getTurId();
-								if (newMap.containsKey(id)) {
-									newMap.get(id).add(recTutor);
-								} else {
-									List<RecommendTutor> recTutorByTutorId = new ArrayList<>();
-									recTutorByTutorId.add(recTutor);
-									newMap.put(id, recTutorByTutorId);
-								}
-							} else {
-								if (recTutor.getMergedClass() != null) {
-									int id1 = recTutor.getMergedClass().getClazz1().getStudent().getStuId();
-									int id2 = recTutor.getMergedClass().getClazz2().getStudent().getStuId();
-									if (id1 == id2) {
-										if (newMap.containsKey(id1)) {
-											newMap.get(id1).add(recTutor);
-										} else {
-											List<RecommendTutor> recTutorByTutorId = new ArrayList<>();
-											recTutorByTutorId.add(recTutor);
-											newMap.put(id1, recTutorByTutorId);
-										}
-									} else {
-										if (newMap.containsKey(id1)) {
-											newMap.get(id1).add(recTutor);
-										} else {
-											List<RecommendTutor> recTutorByTutorId = new ArrayList<>();
-											recTutorByTutorId.add(recTutor);
-											newMap.put(id1, recTutorByTutorId);
-										}
-										if (newMap.containsKey(id2)) {
-											newMap.get(id2).add(recTutor);
-										} else {
-											List<RecommendTutor> recTutorByTutorId = new ArrayList<>();
-											recTutorByTutorId.add(recTutor);
-											newMap.put(id2, recTutorByTutorId);
-										}
-									}
-								} else {
-									id = recTutor.getClazz().getStudent().getStuId();
-									if (newMap.containsKey(id)) {
-										newMap.get(id).add(recTutor);
-									} else {
-										List<RecommendTutor> recTutorByTutorId = new ArrayList<>();
-										recTutorByTutorId.add(recTutor);
-										newMap.put(id, recTutorByTutorId);
-									}
-								}
-							}
-
-						}
-						return selectTutor(newMap, flag);
+						newMap = adjustMap(newMap, newRecTutors, flag);
+						return selectTutor(newMap, groupMergedClassMap,flag);
 					}
 				}
 
@@ -1140,13 +1097,120 @@ public class App {
 		}
 		return selectedTutor;
 	}
-	// Same tutor check time overlap or not?
-	public static List<RecommendTutor> isOverlapTime(List<RecommendTutor> recommendTutors){
 
+	public static Map<Long,List<RecommendTutor>> adjustMap(Map<Long,List<RecommendTutor>> selectedTutor, List<RecommendTutor> newRecTutors, String flag){
+		Map<Long,List<RecommendTutor>> newMap = new HashMap<>(selectedTutor);
+		for (RecommendTutor recTutor : newRecTutors) {
+			Long id = null;
+			if (flag.equals(Constants.FLAG_TUTOR)) {
+				id = recTutor.getTutor().getTurId();
+				if (newMap.containsKey(id)) {
+					newMap.get(id).add(recTutor);
+				} else {
+					List<RecommendTutor> recTutorByTutorId = new ArrayList<>();
+					recTutorByTutorId.add(recTutor);
+					newMap.put(id, recTutorByTutorId);
+				}
+			} else {
+				if (recTutor.getMergedClass() != null) {
+					long id1 = recTutor.getMergedClass().getClazz1().getStudent().getStuId();
+					long id2 = recTutor.getMergedClass().getClazz2().getStudent().getStuId();
+					if (id1 == id2) {
+						if (newMap.containsKey(id1)) {
+							newMap.get(id1).add(recTutor);
+						} else {
+							List<RecommendTutor> recTutorByTutorId = new ArrayList<>();
+							recTutorByTutorId.add(recTutor);
+							newMap.put(id1, recTutorByTutorId);
+						}
+					} else {
+						if (newMap.containsKey(id1)) {
+							newMap.get(id1).add(recTutor);
+						} else {
+							List<RecommendTutor> recTutorByTutorId = new ArrayList<>();
+							recTutorByTutorId.add(recTutor);
+							newMap.put(id1, recTutorByTutorId);
+						}
+						if (newMap.containsKey(id2)) {
+							newMap.get(id2).add(recTutor);
+						} else {
+							List<RecommendTutor> recTutorByTutorId = new ArrayList<>();
+							recTutorByTutorId.add(recTutor);
+							newMap.put(id2, recTutorByTutorId);
+						}
+					}
+				} else {
+					id = recTutor.getClazz().getStudent().getStuId();
+					if (newMap.containsKey(id)) {
+						newMap.get(id).add(recTutor);
+					} else {
+						List<RecommendTutor> recTutorByTutorId = new ArrayList<>();
+						recTutorByTutorId.add(recTutor);
+						newMap.put(id, recTutorByTutorId);
+					}
+				}
+			}
+
+		}
+		return newMap;
+	}
+
+
+	// Same tutor check time overlap or not?
+	public static List<RecommendTutor> isOverlapTime(List<RecommendTutor> recommendTutors, List<RecommendTutor> mergedRecommendTutors){
 		List<RecommendTutor> checkingRecTutors = new ArrayList<>(recommendTutors);
 		// Find duplicated days per tutors or student
-		Map<Integer, Integer> numberOfDuplcated = findNumberOfDuplicatedByDay(recommendTutors);
-		List<RecommendTimelocation> tmpRecTimeLocs =  setSchedule(new ArrayList<>(),new ArrayList<>(), checkingRecTutors, numberOfDuplcated);
+		Map<Long, Long> numberOfDuplcated = findNumberOfDuplicatedByDay(recommendTutors);
+		for (RecommendTutor recommendTutor : recommendTutors) {
+			if (recommendTutor.getMergedClass()!= null && recommendTutor.getMergedClass().getMerType().equals(Constants.MERGEDTYPE_PARTIAL)) {
+				recommendTutor.setTmpFlag(true);
+				if (recommendTutor.getMergedClass().getRemainDays1() != 0) {
+					RecommendTutor tmpRecTutor = new RecommendTutor();
+					tmpRecTutor.setTmpFlag(true);
+					tmpRecTutor.setOwnerRecTutor(recommendTutor);
+					tmpRecTutor.setTutor(recommendTutor.getTutor());
+					tmpRecTutor.setNumOfDays(recommendTutor.getMergedClass().getRemainDays1().longValue());
+					List<RecommendTimelocation> tmpRecTime1 = recommendTutor.getRecommendTimelocations().stream()
+							.filter(it -> it.getRecdClassStart().equals(Constants.TIMELOCTYPE_ONLYCLASS1)).collect(Collectors.toList());
+					tmpRecTutor.setRecommendTimelocations(tmpRecTime1);
+					tmpRecTutor.setAvailableDays(Double.valueOf(tmpRecTime1.size()));
+					tmpRecTutor.setAvailableRatio(Double.valueOf(tmpRecTime1.size())/Double.valueOf(recommendTutor.getMergedClass().getRemainDays1()));
+					Class clz = recommendTutor.getMergedClass().getClazz1();
+					clz.setClsDayperweek(recommendTutor.getMergedClass().getRemainDays1().longValue());
+					tmpRecTutor.setClazz(clz);
+					checkingRecTutors.add(tmpRecTutor);
+				}
+				if (recommendTutor.getMergedClass().getRemainDays2() != 0) {
+					RecommendTutor tmpRecTutor = new RecommendTutor();
+					tmpRecTutor.setTmpFlag(true);
+					tmpRecTutor.setOwnerRecTutor(recommendTutor);
+					tmpRecTutor.setTutor(recommendTutor.getTutor());
+					tmpRecTutor.setNumOfDays(recommendTutor.getMergedClass().getRemainDays2().longValue());
+					List<RecommendTimelocation> tmpRecTime2 = recommendTutor.getRecommendTimelocations().stream()
+							.filter(it -> it.getRecdClassStart().equals(Constants.TIMELOCTYPE_ONLYCLASS2)).collect(Collectors.toList());
+					tmpRecTutor.setRecommendTimelocations(tmpRecTime2);
+					tmpRecTutor.setAvailableDays(Double.valueOf(tmpRecTime2.size()));
+					tmpRecTutor.setAvailableRatio(Double.valueOf(tmpRecTime2.size())/Double.valueOf(recommendTutor.getMergedClass().getRemainDays2()));
+					Class clz = recommendTutor.getMergedClass().getClazz2();
+					clz.setClsDayperweek(recommendTutor.getMergedClass().getRemainDays2().longValue());
+					tmpRecTutor.setClazz(clz);
+					checkingRecTutors.add(tmpRecTutor);
+				}
+			}
+		}
+
+		RecommendTutorService recommendTutorService = new RecommendTutorService();
+		Map<Long, Long> classPerDays = new HashMap<>();
+		classPerDays.put(1L, 0L);
+		classPerDays.put(2L, 0L);
+		classPerDays.put(3L, 0L);
+		classPerDays.put(4L, 0L);
+		classPerDays.put(5L, 0L);
+		classPerDays.put(6L, 0L);
+		classPerDays.put(7L, 0L);
+		List<RecommendTimelocation> tmpRecTimeLocs = recommendTutorService.setSchedule(new ArrayList<>(),new ArrayList<>(), checkingRecTutors, mergedRecommendTutors, numberOfDuplcated,classPerDays);
+		//List<RecommendTimelocation> tmpRecTimeLocs =  setSchedule(new ArrayList<>(),new ArrayList<>(), checkingRecTutors, numberOfDuplcated);
+		tmpRecTimeLocs = changeRectutorFromTmp(tmpRecTimeLocs);
 
 		// Convert RecommendTimelocation to RecommendTutor
 		List<RecommendTutor> newRecommends = getRecommentTutorByRecLoc(tmpRecTimeLocs);
@@ -1158,160 +1222,37 @@ public class App {
 			RecommendTutor recommendTutor = recTimeloacation.getRecommendTutor();
 			recommendTutor.addRecommendTimelocation(recTimeloacation);
 		}
-		//System.out.println("Can pass recommendTutors size : "+newRecommends.size());
 		return newRecommends;
 	}
-	public static List<RecommendTimelocation> setSchedule(List<RecommendTimelocation> tmpRecTimeLocs, List<RecommendTimelocation> problemRecTimeLocs, List<RecommendTutor> recommendTutors, Map<Integer, Integer> numberOfDuplcated){
-		// Start
-		if (!recommendTutors.isEmpty()) {
 
-			recommendTutors.sort(Comparator.comparing(RecommendTutor::getAvailableRatio)
-					.thenComparing(Comparator.comparing(RecommendTutor::getNumOfDays)).reversed());
-			RecommendTutor recTutor = recommendTutors.get(0);
-
-			if (recTutor.getAvailableRatio().equals(1D)) {
-				// Get only not intersect days
-
-				List<RecommendTimelocation> newRecTimeLocs = new ArrayList<>();
-
-				for (RecommendTimelocation recTimeLoc : recTutor.getRecommendTimelocations()){
-					List<RecommendTimelocation> sameDayAndTime1 = tmpRecTimeLocs
-							.stream()
-							.filter(it -> recTimeLoc.getRecdDayId() == it.getRecdDayId()).collect(Collectors.toList());
-					List<RecommendTimelocation> sameDayAndTime2 = problemRecTimeLocs
-							.stream()
-							.filter(it -> recTimeLoc.getRecdDayId() == it.getRecdDayId()).collect(Collectors.toList());
-					if (sameDayAndTime1.isEmpty() && sameDayAndTime2.isEmpty()) {
-						newRecTimeLocs.add(recTimeLoc);
-					}
-				}
-				if (newRecTimeLocs.size() >= recTutor.getNumOfDays()) {
-					for (RecommendTimelocation recTimeLoc : newRecTimeLocs) {
-						tmpRecTimeLocs.add(recTimeLoc);
-					}
-				} else {
-					for (RecommendTimelocation recTimeLoc : recTutor.getRecommendTimelocations()){
-						List<RecommendTimelocation> sameDayAndTime = tmpRecTimeLocs
-								.stream()
-								.filter(it -> recTimeLoc.getRecdDayId() == it.getRecdDayId()).collect(Collectors.toList());
-
-						for (RecommendTimelocation recLoc : sameDayAndTime) {
-							problemRecTimeLocs.addAll(recLoc.getRecommendTutor().getRecommendTimelocations());
-							tmpRecTimeLocs.removeAll(recLoc.getRecommendTutor().getRecommendTimelocations());
-						}
-					}
-
-				}
-			}else{
-				// temp not overlap
-				Map<Integer, Integer> numberOfDuplcatedByRecTutor = new HashMap<>();
-				List<RecommendTimelocation> tmpNotOverlap = new ArrayList<>();
-				for (RecommendTimelocation recTimeLoc : recTutor.getRecommendTimelocations()) {
-					List<RecommendTimelocation> sameDayAndTime = tmpRecTimeLocs
-							.stream()
-							.filter(it -> recTimeLoc.getRecdDayId() == it.getRecdDayId()).collect(Collectors.toList());
-					if (sameDayAndTime.isEmpty()) {
-						tmpNotOverlap.add(recTimeLoc);
-						Integer dayCount = numberOfDuplcated.get(recTimeLoc.getRecdDayId());
-						numberOfDuplcatedByRecTutor.put(recTimeLoc.getRecdDayId(), dayCount);
-					}
-				}
-				Map<Integer, Integer> sorted = numberOfDuplcatedByRecTutor.entrySet().stream()
-						.sorted(Map.Entry.comparingByValue())
-						.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-								(oldValue, newValue) -> oldValue, LinkedHashMap::new));
-				int daysPerWeek = 0;
-				if (recTutor.getMergedClass() != null) {
-					daysPerWeek = recTutor.getMergedClass().getMerMindayperweek();
-				} else {
-					daysPerWeek = recTutor.getClazz().getClsDayperweek();
-				}
-				int i = 0;
-
-				for (Map.Entry<Integer, Integer> entry : sorted.entrySet()) {
-					if (i < daysPerWeek) {
-						List<RecommendTimelocation> sameDayAndTime = recTutor.getRecommendTimelocations()
-								.stream()
-								.filter(it -> it.getRecdDayId() == entry.getKey()).collect(Collectors.toList());
-						tmpRecTimeLocs.addAll(sameDayAndTime);
-					}else {
-						break;
-					}
-					i++;
-				}
+	public static List<RecommendTimelocation> changeRectutorFromTmp(List<RecommendTimelocation> recommendTimelocations) {
+		List<RecommendTimelocation> tmpRecTimeLoc =  new ArrayList<>();
+		for (RecommendTimelocation recTimeLoc : recommendTimelocations) {
+			if (recTimeLoc.getRecommendTutor().isTmpFlag()) {
+				recTimeLoc.setRecommendTutor(recTimeLoc.getRecommendTutor().getOwnerRecTutor());
 			}
-			// Remove checking recommend tutor.
-			List<RecommendTutor> remainRecTutors = new ArrayList<>(recommendTutors);
-			remainRecTutors.remove(recTutor);
-			// set new available ratio
-			List<RecommendTutor> problemsRecTutors = new ArrayList<>();
-			for (RecommendTutor tmpRectutor : remainRecTutors) {
-
-				// Find same days
-				Integer daysCount = 0;
-				for (RecommendTimelocation recTimeLoc : tmpRectutor.getRecommendTimelocations()) {
-					List<RecommendTimelocation> sameDayAndTime1 = tmpRecTimeLocs
-							.stream()
-							.filter(it -> recTimeLoc.getRecdDayId() == it.getRecdDayId()).collect(Collectors.toList());
-					List<RecommendTimelocation> sameDayAndTime2 = problemRecTimeLocs
-							.stream()
-							.filter(it -> recTimeLoc.getRecdDayId() == it.getRecdDayId()).collect(Collectors.toList());
-					if (sameDayAndTime1.isEmpty() && sameDayAndTime2.isEmpty()) {
-						daysCount++;
-					}
-				}
-				Double ratio = 0D;
-				if (recTutor.getMergedClass() != null) {
-					ratio = daysCount.doubleValue() / tmpRectutor.getMergedClass().getMerMindayperweek();
-				} else {
-					ratio = daysCount.doubleValue() / tmpRectutor.getClazz().getClsDayperweek().doubleValue();
-				}
-				if (ratio < 1D) {
-					problemsRecTutors.add(tmpRectutor);
-					// Remove duplicated day from temp cause the duplicated one also the problem.
-					for (RecommendTimelocation recTimeLoc : tmpRectutor.getRecommendTimelocations()) {
-						List<RecommendTimelocation> sameDayAndTime = tmpRecTimeLocs
-								.stream()
-								.filter(it -> recTimeLoc.getRecdDayId() == it.getRecdDayId()).collect(Collectors.toList());
-						for (RecommendTimelocation recLoc : sameDayAndTime) {
-							problemRecTimeLocs.addAll(recLoc.getRecommendTutor().getRecommendTimelocations());
-							tmpRecTimeLocs.removeAll(recLoc.getRecommendTutor().getRecommendTimelocations());
-						}
-					}
-				} else {
-					tmpRectutor.setAvailableRatio(ratio);
-
-				}
-			}
-			// Skip recommend tutor which ratio < 1 or cannot find days match.
-			for (RecommendTutor problemTutor : problemsRecTutors) {
-				for (RecommendTimelocation recTimeLoc : problemTutor.getRecommendTimelocations()) {
-					tmpRecTimeLocs = tmpRecTimeLocs
-							.stream()
-							.filter(it -> it.getRecdDayId() != recTimeLoc.getRecdDayId()).collect(Collectors.toList());
-				}
-			}
-			remainRecTutors.removeAll(problemsRecTutors);
-			return setSchedule(tmpRecTimeLocs, problemRecTimeLocs,remainRecTutors, numberOfDuplcated);
+			tmpRecTimeLoc.add(recTimeLoc);
 		}
-		return tmpRecTimeLocs;
-
+		return tmpRecTimeLoc;
 	}
+
 	public static List<RecommendTutor> getRecommentTutorByRecLoc(List<RecommendTimelocation> recommendTimelocations){
+
 		Set<RecommendTutor> recTutors = recommendTimelocations.stream().map(RecommendTimelocation::getRecommendTutor).collect(Collectors.toSet());
 		return new ArrayList<>(recTutors);
 	}
-	public static List<RecommendTutorOption> createOption(List<RecommendTutor> problemRecTutors, String flag){
+	public static List<RecommendTutorOption> createOption(List<RecommendTutor> problemRecTutors, List<RecommendTutor> mergedRecommendTutors, String flag){
 		// Create possible option
-		System.out.println("List Size : "+problemRecTutors.size());
+		System.out.println(" Create option list Size : "+problemRecTutors.size() + " Flag : "+flag);
 		// set ratio
 		for (RecommendTutor tmpRectutor : problemRecTutors) {
-			Double ratio = 0D;
+			Double ratio = tmpRectutor.getAvailableDays() / tmpRectutor.getNumOfDays().doubleValue();
+			/*
 			if (tmpRectutor.getMergedClass() != null) {
 				ratio = tmpRectutor.getAvailableDays() / tmpRectutor.getMergedClass().getMerMindayperweek();
 			} else {
 				ratio = tmpRectutor.getAvailableDays() / tmpRectutor.getClazz().getClsDayperweek().doubleValue();
-			}
+			}*/
 			tmpRectutor.setAvailableRatio(ratio);
 		}
 
@@ -1323,12 +1264,13 @@ public class App {
 			RecommendTutor nextTutor = null;
 			// Loop others
 			for (RecommendTutor otherRecTutor : others) {
+				//System.out.println("problem :: Class id : "+problem.getClazz().getClsId() + " Tutor ID : "+problem.getTutor().getTurId());
 				if (problem.getClazz() != null && problem.getClazz().getClsId() == otherRecTutor.getClazz().getClsId()) {
-
-					int nextRecOrder = problem.getRecOrder()+1;
+					long nextRecOrder = problem.getRecOrder()+1;
 					nextTutor = problem.getClazz().getRecommendTutors().stream().filter(it -> it.getRecOrder().intValue() == nextRecOrder)
 							.findAny()
 							.orElse(null);
+
 				}else if (problem.getMergedClass() != null && problem.getMergedClass().getClazz1().getClsId() == otherRecTutor.getMergedClass().getClazz1().getClsId()
 						&& problem.getMergedClass().getClazz2().getClsId() == otherRecTutor.getMergedClass().getClazz2().getClsId()) {
 					nextTutor = problem.getMergedClass().getRecommendTutors().stream().filter(it -> it.getRecOrder().equals(problem.getRecOrder()+1))
@@ -1346,18 +1288,48 @@ public class App {
 				recOption = new RecommendTutorOption(recommendTutors, null);
 			}
 			recOptions.add(recOption);
-
 		}
 		int i = 1;
-		for (RecommendTutorOption option : recOptions){
-			List<RecommendTutor> tmpList = option.getRecommendTutors();
 
-			Integer sumTutorSpec = 0;
+		for (RecommendTutorOption option : recOptions){
+			Long minRecOrder = 0L;
+			Long maxRecOrder = 0L;
+			List<RecommendTutor> tmpList = option.getRecommendTutors();
+			int sumTutorSpec = 0;
 			Double sumTravelTime = 0D;
-			Integer sumClsId = 0;
-			for (RecommendTutor rec : tmpList) {
+			Long sumClsId = 0L;
+			Double preAverageLat = 0D;
+			Double preAverageLong = 0D;
+			Double averageLat = 0D;
+			Double averageLong = 0D;
+			Double averageDistance = 0D;
+			for (int j = 0; j<tmpList.size() ; j++) {
+				RecommendTutor rec = tmpList.get(j);
+
+				if (j > 0) {
+					RecommendTutor previousRec = tmpList.get(j-1);
+					for (RecommendTimelocation recTimeLoc : previousRec.getRecommendTimelocations()) {
+						preAverageLat += recTimeLoc.getRecdLat();
+						preAverageLong += recTimeLoc.getRecdLong();
+					}
+					preAverageLat = preAverageLat/ Double.valueOf(previousRec.getRecommendTimelocations().size());
+					preAverageLong = preAverageLong/ Double.valueOf(previousRec.getRecommendTimelocations().size());
+				}
+				for (RecommendTimelocation recTimeLoc : rec.getRecommendTimelocations()) {
+					averageLat += recTimeLoc.getRecdLat();
+					averageLong += recTimeLoc.getRecdLong();
+				}
+				averageLat = averageLat/ Double.valueOf(rec.getRecommendTimelocations().size());
+				averageLong = averageLong/ Double.valueOf(rec.getRecommendTimelocations().size());
+				averageDistance += GoogleMapUtils.distFrom(preAverageLat,preAverageLong,averageLat,averageLong);
 				sumTutorSpec += rec.getRecTutorOrder();
 				sumTravelTime += rec.getMinTravelTime();
+				if (minRecOrder > rec.getRecTutorOrder()) {
+					minRecOrder = rec.getRecTutorOrder();
+				}
+				if (maxRecOrder < rec.getRecTutorOrder()) {
+					maxRecOrder = rec.getRecTutorOrder();
+				}
 				if (rec.getMergedClass() != null) {
 					sumClsId += rec.getMergedClass().getClazz1().getClsId() + rec.getMergedClass().getClazz2().getClsId();
 				} else {
@@ -1366,53 +1338,52 @@ public class App {
 
 			}
 			if (option.getNextRecommendTutor() != null) {
+
 				sumTutorSpec += option.getNextRecommendTutor().getRecTutorOrder();
 				sumTravelTime += option.getNextRecommendTutor().getMinTravelTime();
+				if (minRecOrder > option.getNextRecommendTutor().getRecTutorOrder()) {
+					minRecOrder = option.getNextRecommendTutor().getRecTutorOrder();
+				}
+				if (maxRecOrder < option.getNextRecommendTutor().getRecTutorOrder()) {
+					maxRecOrder = option.getNextRecommendTutor().getRecTutorOrder();
+				}
 				if (option.getNextRecommendTutor().getMergedClass() != null) {
 					sumClsId += option.getNextRecommendTutor().getMergedClass().getClazz1().getClsId() + option.getNextRecommendTutor().getMergedClass().getClazz2().getClsId();
 				} else {
 					sumClsId += option.getNextRecommendTutor().getClazz().getClsId();
 				}
 			}
-			List<RecommendTutor> noProblemTutor = isOverlapTime(tmpList);
+			List<RecommendTutor> noProblemTutor = isOverlapTime(tmpList, mergedRecommendTutors);
+			option.setDiffRecTutorOrder(maxRecOrder-minRecOrder);
 			option.setSumTutorSpec(sumTutorSpec);
 			option.setSumTravelTime(sumTravelTime);
 			option.setNoProblemSize(noProblemTutor.size());
 			option.setSumClassId(sumClsId);
+			option.setAverageDistance(averageDistance / Double.valueOf(tmpList.size()));
 			System.out.println("Option "+i+" / Recommend size : "+option.getRecommendSize()+" No problem size : "+option.getNoProblemSize()+" Sum tutor spec : "+option.getSumTutorSpec()+" Sum travel time : "+option.getSumTravelTime());
-
-			for (RecommendTutor recTutor : tmpList) {
-				System.out.println("Class : "+recTutor.getClazz().getClsId() + " Tutor ID : "+recTutor.getTutor().getTurId());
-				for (RecommendTimelocation recLoc : recTutor.getRecommendTimelocations()) {
-					System.out.println("- Days : "+recLoc.getRecdDayId());
-				}
+			for (RecommendTutor recTutor : option.getRecommendTutors()) {
+				System.out.println("- Class : "+recTutor.getClazz().getClsId() + " Tutor ID : "+recTutor.getTutor().getTurId());
 			}
 			if (option.getNextRecommendTutor() != null) {
-				System.out.println("Class : "+option.getNextRecommendTutor().getClazz().getClsId() + " Tutor ID : "+option.getNextRecommendTutor().getTutor().getTurId());
+				System.out.println("- Class : "+option.getNextRecommendTutor().getClazz().getClsId() + " Tutor ID : "+option.getNextRecommendTutor().getTutor().getTurId());
 			}
 			i++;
 		}
 
 		// Select the best option
-		/*
-		recOptions.sort(Comparator.comparing(RecommendTutorOption::getRecommendSize).reversed()
-				.thenComparing(Comparator.comparing(RecommendTutorOption::getNoProblemSize)).reversed()
-				.thenComparing(Comparator.comparing(RecommendTutorOption::getSumTutorSpec))
-				.thenComparing(Comparator.comparing(RecommendTutorOption::getSumTravelTime)));*/
+		recOptions.sort(Comparator.comparing(RecommendTutorOption::getDiffRecTutorOrder));
 		recOptions.sort(Comparator.comparing(RecommendTutorOption::getSumTravelTime));
+		recOptions.sort(Comparator.comparing(RecommendTutorOption::getAverageDistance));
 		recOptions.sort(Comparator.comparing(RecommendTutorOption::getSumTutorSpec));
 		recOptions.sort(Comparator.comparing(RecommendTutorOption::getNoProblemSize).reversed());
 		recOptions.sort(Comparator.comparing(RecommendTutorOption::getRecommendSize).reversed());
 
 
 
-		System.out.println("** SELECT ***");
+		System.out.println("** SELECT OPTION ***");
 		RecommendTutorOption selected = recOptions.get(0);
 		for (RecommendTutor recTutor : selected.getRecommendTutors()) {
 			System.out.println("Class : "+recTutor.getClazz().getClsId() + " Tutor ID : "+recTutor.getTutor().getTurId());
-			for (RecommendTimelocation recLoc : recTutor.getRecommendTimelocations()) {
-				System.out.println("- Days : "+recLoc.getRecdDayId());
-			}
 		}
 		if (selected.getNextRecommendTutor() != null) {
 			System.out.println("Class : "+selected.getNextRecommendTutor().getClazz().getClsId() + " Tutor ID : "+selected.getNextRecommendTutor().getTutor().getTurId());

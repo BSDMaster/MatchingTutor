@@ -1,10 +1,13 @@
 package com.bsd.tutor.service;
 
+import com.bsd.tutor.dao.TutorDao;
 import com.bsd.tutor.model.*;
 import com.bsd.tutor.model.Class;
+import com.bsd.tutor.utils.ArrayListUtils;
 import com.bsd.tutor.utils.Constants;
 import com.bsd.tutor.utils.DateTimeUtils;
 import com.bsd.tutor.utils.GoogleMapUtils;
+import com.sun.scenario.effect.Merge;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -102,9 +105,9 @@ public class MergedClassService {
     public MergedClass assignedNewTimeLoc(MergedClass tmpMergedClass){
         Class cls1 = tmpMergedClass.getClazz1();
         Class cls2 = tmpMergedClass.getClazz2();
-        Set<Integer> numOfDays = new HashSet<>();
+        Set<Long> numOfDays = new HashSet<>();
         List<MergedClassAvailabletimeLocation> mergedTimes = new ArrayList<>();
-        // Check available days for class 1 only
+        // Check available days for merged class both
         for(StudentAvailableTimelocation dayCls1 : cls1.getStudent().getStudentAvailableTimelocations()){
             for(StudentAvailableTimelocation dayCls2 : cls2.getStudent().getStudentAvailableTimelocations()){
 
@@ -115,7 +118,7 @@ public class MergedClassService {
                         MergedClassAvailabletimeLocation mergedTime = new MergedClassAvailabletimeLocation(tmpMergedClass, dayCls1.getSavDayId());
                         mergedTime.setMervStartTime(time1[0]);
                         mergedTime.setMeavEndTime(time1[1]);
-                        mergedTime.setMervClsStart(1);
+                        mergedTime.setMervClsStart(1L);
                         mergedTime.setMervLat(dayCls1.getSavLat());
                         mergedTime.setMervLong(dayCls1.getSavLong());
                         mergedTime.setMervLocation(dayCls1.getSavLocation());
@@ -127,7 +130,7 @@ public class MergedClassService {
                         MergedClassAvailabletimeLocation mergedTime = new MergedClassAvailabletimeLocation(tmpMergedClass, dayCls1.getSavDayId());
                         mergedTime.setMervStartTime(time2[0]);
                         mergedTime.setMeavEndTime(time2[1]);
-                        mergedTime.setMervClsStart(2);
+                        mergedTime.setMervClsStart(2L);
                         mergedTime.setMervLat(dayCls2.getSavLat());
                         mergedTime.setMervLong(dayCls2.getSavLong());
                         mergedTime.setMervLocation(dayCls2.getSavLocation());
@@ -144,27 +147,81 @@ public class MergedClassService {
             System.out.println("-----------------------------------------");
             System.out.println("Merged Class : "+tmpMergedClass.toString()+ " / Number of match days : "+mergedTimes.size());
             System.out.println("-----------------------------------------");
-            Integer maxDay = Math.max(cls1.getClsDayperweek(),cls2.getClsDayperweek());
-            tmpMergedClass.setMacDays(maxDay);
+            Long maxDay = Math.max(cls1.getClsDayperweek(),cls2.getClsDayperweek());
+            tmpMergedClass.setMaxDays(maxDay.intValue());
             tmpMergedClass.setMerMergeratio(numOfDays.size()/maxDay);
-            Integer minDays  = Math.min(cls1.getClsDayperweek(),cls2.getClsDayperweek());
+            Long minDays  = Math.min(cls1.getClsDayperweek(),cls2.getClsDayperweek());
             tmpMergedClass.setMerMindayperweek(minDays);
-            tmpMergedClass.setAvaDays(numOfDays);
-            tmpMergedClass.setNumberOfAvaDays(numOfDays.size());
-            tmpMergedClass.setMergedClassAvailabletimes(mergedTimes);
+            if (numOfDays.size() >= maxDay) {
+                // for full merged
+                tmpMergedClass.setMerType(Constants.MERGEDTYPE_FULL);
+
+                tmpMergedClass.setAvaDays(numOfDays);
+                tmpMergedClass.setNumberOfAvaDays(numOfDays.size());
+                tmpMergedClass.setMergedClassAvailabletimes(mergedTimes);
+            } else {
+                tmpMergedClass.setMerType(Constants.MERGEDTYPE_PARTIAL);
+                int remainDayCls1 = tmpMergedClass.getClazz1().getClsDayperweek().intValue() - numOfDays.size();
+                int remainDayCls2 = tmpMergedClass.getClazz2().getClsDayperweek().intValue() - numOfDays.size();
+                tmpMergedClass.setRemainDays1(remainDayCls1);
+                tmpMergedClass.setRemainDays2(remainDayCls2);
+                List<MergedClassAvailabletimeLocation> partialMergedTimes1 = new ArrayList<>();
+                List<MergedClassAvailabletimeLocation> partialMergedTimes2 = new ArrayList<>();
+
+                if (remainDayCls1 > 0) {
+                    partialMergedTimes1 = assignedNewTimeLocForPartialMerged(tmpMergedClass.getClazz1(), tmpMergedClass, mergedTimes, Constants.TIMELOCTYPE_ONLYCLASS1);
+                    tmpMergedClass.addAllMergedClassAvailabletime(partialMergedTimes1);
+                }
+                if (remainDayCls2 > 0) {
+                    partialMergedTimes2 = assignedNewTimeLocForPartialMerged(tmpMergedClass.getClazz2(), tmpMergedClass, mergedTimes, Constants.TIMELOCTYPE_ONLYCLASS2);
+                    tmpMergedClass.addAllMergedClassAvailabletime(partialMergedTimes2);
+                }
+                // find intersect days
+                List<MergedClassAvailabletimeLocation> intersectPartialMergedTimes = new ArrayList<>();
+                List<MergedClassAvailabletimeLocation> tmpPartialMergedTimes1 = new ArrayList<>(partialMergedTimes1);
+                List<MergedClassAvailabletimeLocation> tmpPartialMergedTimes2 = new ArrayList<>(partialMergedTimes2);
+
+                for (MergedClassAvailabletimeLocation mergedTimeLoc1 :tmpPartialMergedTimes1) {
+                    List<MergedClassAvailabletimeLocation> intersectPartialMergedTimesEachDays = tmpPartialMergedTimes2.stream()
+                            .filter(it -> mergedTimeLoc1.getMeavDayId() == it.getMeavDayId()).collect(Collectors.toList());
+                    intersectPartialMergedTimes.addAll(intersectPartialMergedTimesEachDays);
+                }
+                tmpPartialMergedTimes1.removeAll(intersectPartialMergedTimes);
+                tmpPartialMergedTimes2.removeAll(intersectPartialMergedTimes);
+                if (remainDayCls1+remainDayCls2 > tmpPartialMergedTimes1.size() + tmpPartialMergedTimes2.size() + intersectPartialMergedTimes.size()) {
+                    return null;
+                }
+            }
+
             return tmpMergedClass;
-/*
-				if (numOfDays.size() >= maxDay) {
-					mergedClass.setMerMergeratio(1D);
-				} else {
-					mergedClass.setMerMergeratio(mergedClass.getNumberOfAvaDays()/maxDay);
-				}
-*/				// Min days per week (Number of days that able to be merged such as Class1 has 2 days and Class2 has 1 days. Merged class should be 1 days and another one for Class1)
-
-
         }
         return null;
 
+    }
+
+    public List<MergedClassAvailabletimeLocation> assignedNewTimeLocForPartialMerged(Class cls, MergedClass tmpMergedClass, List<MergedClassAvailabletimeLocation> intersectMergedTimes, Long clsNo){
+        List<MergedClassAvailabletimeLocation> partialMergedTimes = new ArrayList<>();
+        List<StudentAvailableTimelocation> remainTimeLoc = cls.getStudent().getStudentAvailableTimelocations();
+        for (MergedClassAvailabletimeLocation mergedTimeLoc : intersectMergedTimes) {
+            List<StudentAvailableTimelocation> filterTimeLoc = remainTimeLoc
+                    .stream()
+                    .filter(it -> mergedTimeLoc.getMeavDayId() == it.getSavDayId()).collect(Collectors.toList());
+            remainTimeLoc.removeAll(filterTimeLoc);
+        }
+
+        for (StudentAvailableTimelocation stuTimeLoc :remainTimeLoc) {
+            MergedClassAvailabletimeLocation partialMergedTime = new MergedClassAvailabletimeLocation(tmpMergedClass, stuTimeLoc.getSavDayId());
+            partialMergedTime.setMervStartTime(stuTimeLoc.getSavStartTime());
+            partialMergedTime.setMeavEndTime(stuTimeLoc.getSavEndTime());
+            partialMergedTime.setMervClsStart(clsNo);
+            partialMergedTime.setMervLat(stuTimeLoc.getSavLat());
+            partialMergedTime.setMervLong(stuTimeLoc.getSavLong());
+            partialMergedTime.setMervLocation(stuTimeLoc.getSavLocation());
+            partialMergedTime.setMeavDayId(stuTimeLoc.getSavDayId());
+            partialMergedTimes.add(partialMergedTime);
+        }
+
+        return partialMergedTimes;
     }
 
     public MergedClass assignedNewProperites(MergedClass tmpMergedClass){
@@ -229,7 +286,7 @@ public class MergedClassService {
         System.out.println("- Ratio days : "+tmpMergedClass.getMerMergeratio());
         System.out.println("- Min days : "+tmpMergedClass.getMerMindayperweek());
         System.out.println("- Available days : "+tmpMergedClass.getAvaDays());
-//        System.out.println("- Max days : "+tmpMergedClass.getMacDays());
+//        System.out.println("- Max days : "+tmpMergedClass.getMaxDays());
         System.out.println("Time Spec");
         for (MergedClassAvailabletimeLocation mergedTimeLoc : tmpMergedClass.getMergedClassAvailabletimes()) {
             System.out.println("- Class start : "+mergedTimeLoc.getMervClsStart()+ " / Day : "+mergedTimeLoc.getMeavDayId()+ " / Time : "+mergedTimeLoc.getMervStartTime() + " - "+mergedTimeLoc.getMeavEndTime());
@@ -324,12 +381,12 @@ public class MergedClassService {
         }
 
         // Tutor’s year experience
-        recTutor.setRecTutorYearExp(0);
+        recTutor.setRecTutorYearExp(0L);
         if (mergedCls.getClazz1().getClsTutorExp() == null && mergedCls.getClazz2().getClsTutorExp() == null) {
             recTutor.setRecTutorExpFlag(Constants.FLAG_YES);
         } else {
-            Integer expCls1 = 0;
-            Integer expCls2 = 0;
+            long expCls1 = 0;
+            long expCls2 = 0;
             for (TutorSubject tutorSubject : recTutor.getTutor().getTutorSubject()) {
                 if (tutorSubject.getSubjectDetail().getSubject().getSubjId() == mergedCls.getClazz1().getSubject().getSubjId()
                         && tutorSubject.getSubjectDetail().getSubjectGroup().getGrpId() == mergedCls.getClazz1().getSubjectGroupDetail().getSubjectGroup().getGrpId()
@@ -359,7 +416,103 @@ public class MergedClassService {
         return recTutor;
     }
 
-    public static RecommendTutor filterTutorsByAvailableDayMerged(Integer days, Double classDuration, List<MergedClassAvailabletimeLocation> mAvas, Tutor tutor) {
+    public static MergedClass tutorMatchingForMergedClass(MergedClass tmpMergedClass){
+            // - case full merge
+            System.out.println("-----------------------------------------");
+            System.out.println("Merged Class : "+tmpMergedClass.toString());
+            System.out.println("-----------------------------------------");
+            Long subjectId1 = tmpMergedClass.getClazz1().getSubject().getSubjId();
+            Long groupDetailId1 = tmpMergedClass.getClazz1().getSubjectGroupDetail().getSubjectGroup().getGrpId();
+            Long subjectId2 = tmpMergedClass.getClazz2().getSubject().getSubjId();
+            Long groupDetailId2 = tmpMergedClass.getClazz2().getSubjectGroupDetail().getSubjectGroup().getGrpId();
+            TutorDao tutorDao = new TutorDao();
+            List<Tutor> tutors1 = tutorDao.findBySubjectAndProgram(subjectId1, groupDetailId1,tmpMergedClass.getMerTurPrgId());
+            List<Tutor> tutors2 = tutorDao.findBySubjectAndProgram(subjectId2, groupDetailId2,tmpMergedClass.getMerTurPrgId());
+            List<Tutor> intersectTutors = ArrayListUtils.intersection(tutors1,tutors2);
+            System.out.println("2.4.1 Match subject and subject group - Match tutors : "+intersectTutors.size());
+            for (Tutor tutor : intersectTutors) {
+                System.out.println("- Tutor ID : "+tutor.getTurId());
+                for (TutorAvailableTimeloacation tAva : tutor.getTutorAvailableTimeloacations()) {
+                    System.out.println("Tutor available / Day : " + tAva.getTavDayId() + " Time : " + tAva.getTavStartTime() + " - " + tAva.getTavEndTime());
+                }
+            }
+            System.out.println("-------------------------------------");
+            System.out.println("2.4.2 Match with tutor available days");
+            List<RecommendTutor> recommendTutors = new ArrayList<>();
+            tmpMergedClass.setRecommendTutors(recommendTutors);
+            if (tmpMergedClass.getMerType().equals(Constants.MERGEDTYPE_FULL)) {
+                // Case full merged
+                for (Tutor tutor : intersectTutors) {
+                    System.out.println("- Tutor ID : "+tutor.getTurId());
+                    // Filter by tutor available days
+                    RecommendTutor recTutor = filterTutorsByAvailableDayMerged(tmpMergedClass.getMerMindayperweek(), tmpMergedClass.getClazz1().getClsDuration() + tmpMergedClass.getClazz2().getClsDuration(), tmpMergedClass.getMergedClassAvailabletimes(), tutor);
+                    if (recTutor != null) {
+                        tmpMergedClass.addRecommendTutor(recTutor);
+                    }
+                }
+                System.out.println("-------------------------------------");
+                System.out.println("Tutor recommend size : "+tmpMergedClass.getRecommendTutors().size());
+                System.out.println("-------------------------------------");
+
+            }
+            // - case partial merge
+            else {
+                //
+                boolean isCls1Pass = true;
+                boolean isCls2Pass = true;
+                List tmpTimeLocFull = tmpMergedClass.getMergedClassAvailabletimes().stream().filter(it -> (it.getMervClsStart().equals(1L) || it.getMervClsStart().equals(2L))).collect(Collectors.toList());
+                List tmpTimeLocPart1 = tmpMergedClass.getMergedClassAvailabletimes().stream().filter(it -> it.getMervClsStart().equals(3L)).collect(Collectors.toList());
+                List tmpTimeLocPart2 = tmpMergedClass.getMergedClassAvailabletimes().stream().filter(it -> it.getMervClsStart().equals(4L)).collect(Collectors.toList());
+
+                for (Tutor tutor : intersectTutors) {
+                    RecommendTutor recTutorFull = filterTutorsByAvailableDayMerged(Long.valueOf(tmpTimeLocFull.size()), tmpMergedClass.getClazz1().getClsDuration() + tmpMergedClass.getClazz2().getClsDuration(), tmpTimeLocFull, tutor);
+                    RecommendTutor recTutorPart1 = null;
+                    RecommendTutor recTutorPart2 = null;
+                    if (tmpMergedClass.getRemainDays1() > 0) {
+                        isCls1Pass = false;
+                        recTutorPart1 = filterTutorsByAvailableDayMerged(Long.valueOf(tmpMergedClass.getRemainDays1()), tmpMergedClass.getClazz1().getClsDuration(), tmpTimeLocPart1, tutor);
+                        if (recTutorPart1.getRecommendTimelocations().size() >= tmpMergedClass.getRemainDays1()) {
+                            isCls1Pass = true;
+                        }
+                    }
+                    if (tmpMergedClass.getRemainDays2() > 0) {
+                        isCls2Pass = false;
+                        recTutorPart2 = filterTutorsByAvailableDayMerged(Long.valueOf(tmpMergedClass.getRemainDays2()), tmpMergedClass.getClazz2().getClsDuration(), tmpTimeLocPart2, tutor);
+                        if (recTutorPart2.getRecommendTimelocations().size() >= tmpMergedClass.getRemainDays2()) {
+                            isCls2Pass = true;
+                        }
+                    }
+                    if (recTutorFull != null && isCls1Pass && isCls2Pass) {
+                        List<RecommendTimelocation> intersectPartials = new ArrayList<>();
+                        List<RecommendTimelocation> tmpPartialMergedTimes1 = new ArrayList<>(recTutorPart1.getRecommendTimelocations());
+                        List<RecommendTimelocation> tmpPartialMergedTimes2 = new ArrayList<>(recTutorPart2.getRecommendTimelocations());
+                        for (RecommendTimelocation recTutorPart1TimeLoc :recTutorPart1.getRecommendTimelocations()) {
+                            List<RecommendTimelocation> intersectPartialTimeLocEachDays =  recTutorPart2.getRecommendTimelocations().stream()
+                                    .filter(it -> recTutorPart1TimeLoc.getRecdDayId() == it.getRecdDayId()).collect(Collectors.toList());
+                            intersectPartials.addAll(intersectPartialTimeLocEachDays);
+                            tmpPartialMergedTimes1.removeAll(intersectPartialTimeLocEachDays);
+                            tmpPartialMergedTimes2.removeAll(intersectPartialTimeLocEachDays);
+                        }
+                        if (tmpMergedClass.getRemainDays1()+tmpMergedClass.getRemainDays2() <= tmpPartialMergedTimes1.size() + tmpPartialMergedTimes2.size() + intersectPartials.size()) {
+                            if (recTutorPart1 != null && !recTutorPart1.getRecommendTimelocations().isEmpty()) {
+                                recTutorFull.getRecommendTimelocations().addAll(recTutorPart1.getRecommendTimelocations());
+                            }
+                            if (recTutorPart2 != null && !recTutorPart2.getRecommendTimelocations().isEmpty()) {
+                                recTutorFull.getRecommendTimelocations().addAll(recTutorPart2.getRecommendTimelocations());
+                            }
+                            // Calculate ratio for partial merged
+                            Double availableDays = recTutorFull.getAvailableDays() + tmpPartialMergedTimes1.size() + tmpPartialMergedTimes2.size() +  intersectPartials.size();
+                            recTutorFull.setAvailableRatio(availableDays / (recTutorFull.getAvailableDays() + tmpMergedClass.getRemainDays1() + tmpMergedClass.getRemainDays2()));
+                            tmpMergedClass.addRecommendTutor(recTutorFull);
+                        }
+                    }
+                }
+            }
+
+           return tmpMergedClass;
+    }
+
+    public static RecommendTutor filterTutorsByAvailableDayMerged(Long days, Double classDuration, List<MergedClassAvailabletimeLocation> mAvas, Tutor tutor) {
         GoogleAPIMapServices googleService = new GoogleAPIMapServices();
         System.out.println("Class day per week : "+days + " / Duration : "+classDuration + " / Num of tutor available days : "+mAvas.size());
         GoogleAPIMapServices googleMapService = new GoogleAPIMapServices();
@@ -368,7 +521,7 @@ public class MergedClassService {
         recTutor.setTutor(tutor);
         recTutor.setNumOfDays(days);
         recTutor.setRecommendTimelocations(recTimeLoc);
-        Set<Integer> daySet = new HashSet<>();
+        Set<Long> daySet = new HashSet<>();
 
         for (MergedClassAvailabletimeLocation mAva : mAvas) {
 
@@ -388,11 +541,13 @@ public class MergedClassService {
                             daysMatch.getTavTraDrive(), daysMatch.getTavTraTaxi(), daysMatch.getTavTraTrain(), daysMatch.getTavTraBus(), googleMapService));
                     Double duration2 = DateTimeUtils.convertSecondsToHours(googleService.calculateTravelTime(mAva.getMervLat(), mAva.getMervLong(), daysMatch.getTavEndLat(), daysMatch.getTavEndLong(),
                             daysMatch.getTavTraDrive(), daysMatch.getTavTraTaxi(), daysMatch.getTavTraTrain(), daysMatch.getTavTraBus(), googleMapService));
+                    System.out.println("HOUR : duration1 : "+duration1 + " duration2 : "+duration2);
                     Double startTime = DateTimeUtils.getStartTime(mAva.getMervStartTime(), daysMatch.getTavStartTime());
                     Double endTime = DateTimeUtils.getEndTime(mAva.getMeavEndTime(), daysMatch.getTavEndTime());
-                    System.out.println("Travel Time : "+DateTimeUtils.addTime(duration1,duration2));
+                    System.out.println("Travel Time : "+DateTimeUtils.hourFormat(DateTimeUtils.addTime(duration1,duration2)));
                     // Tutor start time
-                    if (!DateTimeUtils.doubleToDate(duration1 + duration2).after(DateTimeUtils.doubleToDate(Constants.MAX_TRAVELTIME))) {
+                    if (!DateTimeUtils.doubleToDate(duration1 + duration2).after(DateTimeUtils.doubleToDate(Constants.MAX_TRAVELTIME)) ||
+                            DateTimeUtils.doubleToDate(duration1 + duration2).equals(DateTimeUtils.doubleToDate(Constants.MAX_TRAVELTIME))) {
                         if (daysMatch.getTavStartTime().equals(startTime)) {
                             Date expectDuration = DateTimeUtils.addTime(duration1, classDuration);
                             System.out.println("Expect overlap duration : " + DateTimeUtils.hourFormat(expectDuration));
@@ -405,9 +560,11 @@ public class MergedClassService {
                             System.out.println("Expect time back to tutor location : " + DateTimeUtils.hourFormat(expectBackTime));
 
 
-                            if (!expectDuration.after(DateTimeUtils.doubleToDate(overlapHours)) && !expectFinishClassTime.after(DateTimeUtils.doubleToDate(daysMatch.getTavEndTime()))) {
+                            if (!expectDuration.after(DateTimeUtils.doubleToDate(overlapHours)) && (!expectFinishClassTime.after(DateTimeUtils.doubleToDate(daysMatch.getTavEndTime()))
+                            ||expectFinishClassTime.equals(DateTimeUtils.doubleToDate(daysMatch.getTavEndTime())))) {
                                 System.out.println("* 1 Able to teach on the day");
                                 RecommendTimelocation recTime = new RecommendTimelocation();
+                                recTime.setRecdClassStart(mAva.getMervClsStart());
                                 recTime.setRecdTraveltime1(duration1);
                                 recTime.setRecdTraveltime2(duration2);
                                 recTime.setRecdTraveltime(duration1 + duration2);
@@ -416,6 +573,12 @@ public class MergedClassService {
                                 recTime.setRecdEnd(Double.parseDouble(DateTimeUtils.hourFormat(expectFinishClassTime)));
                                 recTime.setRecdTravelStart(daysMatch.getTavStartTime());
                                 recTime.setRecdTravelEnd(Double.parseDouble(DateTimeUtils.hourFormat(expectBackTime)));
+                                recTime.setRecdAvaStart(Double.parseDouble(DateTimeUtils.hourFormat(expectStartClassTime)));
+                                recTime.setRecdAvaEnd(endTime);
+                                recTime.setRecdLoc(mAva.getMervLocation());
+                                recTime.setRecdLat(mAva.getMervLat());
+                                recTime.setRecdLong(mAva.getMervLong());
+                                recTime.setDuration(classDuration);
                                 recTutor.addRecommendTimelocation(recTime);
                                 daySet.add(mAva.getMeavDayId());
                             }
@@ -430,9 +593,11 @@ public class MergedClassService {
 
                             Date expectBackTime = DateTimeUtils.addTime(startTime, classDuration, duration2);
                             System.out.println("Expect time back to tutor location : " + DateTimeUtils.hourFormat(expectBackTime));
-                            if (!expectStartTravelTime.before(DateTimeUtils.doubleToDate(daysMatch.getTavStartTime())) && !expectBackTime.after(DateTimeUtils.doubleToDate(daysMatch.getTavEndTime()))) {
+                            if (!expectStartTravelTime.before(DateTimeUtils.doubleToDate(daysMatch.getTavStartTime())) && (!expectBackTime.after(DateTimeUtils.doubleToDate(daysMatch.getTavEndTime()))
+                            || expectBackTime.equals(DateTimeUtils.doubleToDate(daysMatch.getTavEndTime())))) {
                                 System.out.println("* 2 Able to teach on the day");
                                 RecommendTimelocation recTime = new RecommendTimelocation();
+                                recTime.setRecdClassStart(mAva.getMervClsStart());
                                 recTime.setRecdTraveltime1(duration1);
                                 recTime.setRecdTraveltime2(duration2);
                                 recTime.setRecdTraveltime(duration1 + duration2);
@@ -441,6 +606,12 @@ public class MergedClassService {
                                 recTime.setRecdEnd(Double.parseDouble(DateTimeUtils.hourFormat(expectFinishClassTime)));
                                 recTime.setRecdTravelStart(Double.parseDouble(DateTimeUtils.hourFormat(expectStartTravelTime)));
                                 recTime.setRecdTravelEnd(Double.parseDouble(DateTimeUtils.hourFormat(expectBackTime)));
+                                recTime.setRecdAvaStart(mAva.getMervStartTime());
+                                recTime.setRecdAvaEnd(endTime);
+                                recTime.setRecdLoc(mAva.getMervLocation());
+                                recTime.setRecdLat(mAva.getMervLat());
+                                recTime.setRecdLong(mAva.getMervLong());
+                                recTime.setDuration(classDuration);
                                 recTutor.addRecommendTimelocation(recTime);
                                 daySet.add(mAva.getMeavDayId());
                             }
@@ -480,6 +651,41 @@ public class MergedClassService {
             mergedClasses.add(tmpMergedClass);
         }
         return mergedClasses;
+    }
+
+    public List<RecommendTutor> findRecTutorByClsId(List<RecommendTimelocation> tmpRecTimeLocs, RecommendTutor recTutor) {
+        List<RecommendTutor> tmpRecTutors = new ArrayList<>();
+        RecommendTutor recTutorMerged = null;
+        if (recTutor.getClazz()!=null) {
+            // find merged class
+            for (RecommendTimelocation tmpRecTimeLoc : tmpRecTimeLocs) {
+                if (tmpRecTimeLoc.getRecommendTutor().getMergedClass() != null) {
+                    System.out.println("Merged1 : " + tmpRecTimeLoc.getRecommendTutor().getMergedClass().getClazz1().toString());
+                    System.out.println("Merged2 : " + tmpRecTimeLoc.getRecommendTutor().getMergedClass().getClazz2().toString());
+                    if (tmpRecTimeLoc.getRecommendTutor().getMergedClass().getClazz1().getClsId() == recTutor.getClazz().getClsId() ||
+                            tmpRecTimeLoc.getRecommendTutor().getMergedClass().getClazz2().getClsId() == recTutor.getClazz().getClsId()) {
+                        recTutorMerged = tmpRecTimeLoc.getRecommendTutor();
+                        tmpRecTutors.add(recTutorMerged);
+                        break;
+                    }
+                }
+            }
+
+        } else {
+            recTutorMerged = recTutor;
+        }
+        if (recTutorMerged != null) {
+            for (RecommendTimelocation tmpRecTimeLoc : tmpRecTimeLocs) {
+                if (tmpRecTimeLoc.getRecommendTutor().getClazz() != null &&
+                        (recTutorMerged.getMergedClass().getClazz1().getClsId() == tmpRecTimeLoc.getRecommendTutor().getClazz().getClsId()
+                                || recTutorMerged.getMergedClass().getClazz2().getClsId() == tmpRecTimeLoc.getRecommendTutor().getClazz().getClsId() )) {
+                    tmpRecTutors.add(tmpRecTimeLoc.getRecommendTutor());
+
+                }
+            }
+        }
+
+        return tmpRecTutors;
     }
 
 }

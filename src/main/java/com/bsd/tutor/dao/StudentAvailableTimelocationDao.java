@@ -34,7 +34,7 @@ public class StudentAvailableTimelocationDao {
         return timelocations;
     }
 
-    public static Integer create(StudentAvailableTimelocation e) {
+    public static Long create(StudentAvailableTimelocation e) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         session.beginTransaction();
         session.save(e);
@@ -56,14 +56,14 @@ public class StudentAvailableTimelocationDao {
     }
 
 
-    public static StudentAvailableTimelocation findByID(Integer id) {
+    public static StudentAvailableTimelocation findByID(Long id) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         StudentAvailableTimelocation e = (StudentAvailableTimelocation) session.load(StudentAvailableTimelocation.class, id);
         session.close();
         return e;
     }
 
-    public static List<StudentAvailableTimelocation> findByExceptSpecificDays(Set<Integer> days) {
+    public static List<StudentAvailableTimelocation> findByExceptSpecificDays(Set<Long> days) {
         Session session = HibernateUtil.getSessionFactory().openSession();
         @SuppressWarnings("unchecked")
         String hql = "SELECT st FROM StudentAvailableTimelocation as st " +

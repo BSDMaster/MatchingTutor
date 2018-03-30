@@ -18,7 +18,7 @@ public class SubjectDetail implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="SUBD_ID")
-	private Integer subdId;
+	private Long subdId;
 
 	//bi-directional many-to-one association to Subject
 	@ManyToOne(fetch=FetchType.EAGER)
@@ -33,11 +33,11 @@ public class SubjectDetail implements Serializable {
 	public SubjectDetail() {
 	}
 
-	public Integer getSubdId() {
+	public Long getSubdId() {
 		return this.subdId;
 	}
 
-	public void setSubdId(Integer subdId) {
+	public void setSubdId(Long subdId) {
 		this.subdId = subdId;
 	}
 

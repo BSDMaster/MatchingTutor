@@ -16,7 +16,7 @@ public class Traveltype implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="TRA_ID")
-	private Integer traId;
+	private Long traId;
 
 	@Column(name="TRA_NAME")
 	private String traName;
@@ -27,11 +27,11 @@ public class Traveltype implements Serializable {
 	public Traveltype() {
 	}
 
-	public Integer getTraId() {
+	public Long getTraId() {
 		return this.traId;
 	}
 
-	public void setTraId(Integer traId) {
+	public void setTraId(Long traId) {
 		this.traId = traId;
 	}
 

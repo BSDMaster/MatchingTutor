@@ -13,21 +13,25 @@ import java.util.List;
 public class RecommendTutorOption implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	private Integer optionId;
+	private Long optionId;
 
 	private List<RecommendTutor> recommendTutors;
 
 	private RecommendTutor nextRecommendTutor;
 
-	private Integer sumTutorSpec;
+	private int sumTutorSpec;
 
 	private  Double sumTravelTime;
 
-	private Integer recommendSize;
+	private int recommendSize;
 
-	private Integer noProblemSize;
+	private int noProblemSize;
 
-	private  Integer sumClassId;
+	private  Long sumClassId;
+
+	private Long diffRecTutorOrder;
+
+	private Double averageDistance;
 
 	public RecommendTutorOption() {
 	}
@@ -39,11 +43,11 @@ public class RecommendTutorOption implements Serializable {
 	}
 
 
-	public Integer getOptionId() {
+	public Long getOptionId() {
 		return optionId;
 	}
 
-	public void setOptionId(Integer optionId) {
+	public void setOptionId(Long optionId) {
 		this.optionId = optionId;
 	}
 
@@ -55,11 +59,11 @@ public class RecommendTutorOption implements Serializable {
 		this.recommendTutors = recommendTutors;
 	}
 
-	public Integer getSumTutorSpec() {
+	public int getSumTutorSpec() {
 		return sumTutorSpec;
 	}
 
-	public void setSumTutorSpec(Integer sumTutorSpec) {
+	public void setSumTutorSpec(int sumTutorSpec) {
 		this.sumTutorSpec = sumTutorSpec;
 	}
 
@@ -79,27 +83,43 @@ public class RecommendTutorOption implements Serializable {
 		this.nextRecommendTutor = nextRecommendTutor;
 	}
 
-	public Integer getRecommendSize() {
+	public int getRecommendSize() {
 		return recommendSize;
 	}
 
-	public void setRecommendSize(Integer recommendSize) {
+	public void setRecommendSize(int recommendSize) {
 		this.recommendSize = recommendSize;
 	}
 
-	public Integer getNoProblemSize() {
+	public int getNoProblemSize() {
 		return noProblemSize;
 	}
 
-	public void setNoProblemSize(Integer noProblemSize) {
+	public void setNoProblemSize(int noProblemSize) {
 		this.noProblemSize = noProblemSize;
 	}
 
-	public Integer getSumClassId() {
+	public Long getSumClassId() {
 		return sumClassId;
 	}
 
-	public void setSumClassId(Integer sumClassId) {
+	public Long getDiffRecTutorOrder() {
+		return diffRecTutorOrder;
+	}
+
+	public void setDiffRecTutorOrder(Long diffRecTutorOrder) {
+		this.diffRecTutorOrder = diffRecTutorOrder;
+	}
+
+	public void setSumClassId(Long sumClassId) {
 		this.sumClassId = sumClassId;
+	}
+
+	public Double getAverageDistance() {
+		return averageDistance;
+	}
+
+	public void setAverageDistance(Double averageDistance) {
+		this.averageDistance = averageDistance;
 	}
 }

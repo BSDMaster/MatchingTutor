@@ -17,7 +17,7 @@ public class TutorProgram implements Serializable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	@Column(name="TTP_ID")
-	private Integer ttpId;
+	private Long ttpId;
 
 
     @ManyToOne(fetch=FetchType.LAZY, cascade = CascadeType.ALL)
@@ -25,16 +25,16 @@ public class TutorProgram implements Serializable {
     private Tutor tutor;
 
     @Column(name="TTP_PRG_ID")
-    private Integer ttpPrgId;
+    private Long ttpPrgId;
 
 	public TutorProgram() {
 	}
 
-	public Integer getTtpId() {
+	public Long getTtpId() {
 		return this.ttpId;
 	}
 
-	public void setTtpId(Integer ttpId) {
+	public void setTtpId(Long ttpId) {
 		this.ttpId = ttpId;
 	}
 
@@ -46,11 +46,11 @@ public class TutorProgram implements Serializable {
         this.tutor = tutor;
     }
 
-    public Integer getTtpPrgId() {
+    public Long getTtpPrgId() {
         return ttpPrgId;
     }
 
-    public void setTtpPrgId(Integer ttpPrgId) {
+    public void setTtpPrgId(Long ttpPrgId) {
         this.ttpPrgId = ttpPrgId;
     }
 
